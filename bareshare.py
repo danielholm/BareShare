@@ -31,13 +31,19 @@ def menuitem_response(w, buf):
 
 if __name__ == "__main__":
   ind = appindicator.Indicator ("BareShare",
-                              "indicator-messages",
+                              "nautilus",
                               appindicator.CATEGORY_APPLICATION_STATUS)
   ind.set_status (appindicator.STATUS_ACTIVE)
   ind.set_attention_icon ("indicator-messages-new")
+#gtk.set_from_image
 
   # create a menu
   menu = gtk.Menu()
+
+  # Add a new share/backup
+  label = "BareShare"
+  menu_label = gtk.MenuItem(label)
+  menu.append(menu_label)
 
   # Add a new share/backup
   new = "Add Share"
@@ -46,13 +52,29 @@ if __name__ == "__main__":
 
   # Add a new share/backup
   pref = "Preferences"
-  menu_items2 = gtk.MenuItem(pref)
+  menu_items2 = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
   menu.append(menu_items2)
+
+  # Separator
+  item = gtk.SeparatorMenuItem()
+  item.show()
+  menu.append(item)
 
   # ABout dialog
   about = "About"
-  menu_items3 = gtk.MenuItem(about)
+  menu_items3 = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
   menu.append(menu_items3)
+
+  # Separator
+  item = gtk.SeparatorMenuItem()
+  item.show()
+  menu.append(item)
+
+  #Quit button
+  item = gtk.ImageMenuItem(gtk.STOCK_QUIT)
+  item.connect("activate", quit)
+  item.show()
+  menu.append(item)
 
   # Connect menu items to functions
   menu_items1.connect("activate", menuitem_response, new)
@@ -60,9 +82,11 @@ if __name__ == "__main__":
   menu_items3.connect("activate", menuitem_response, about)
 
   # show the items
+  menu_label.show()
   menu_items1.show()
   menu_items2.show()
   menu_items3.show()
+  menu.show()
 
   ind.set_menu(menu)
 
