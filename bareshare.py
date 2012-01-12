@@ -26,6 +26,7 @@ import gobject
 import appindicator
 import pynotify
 import os
+import sys
 import xml.dom.minidom
 
 # Settingsdir and -file.
@@ -57,6 +58,7 @@ if not os.path.exists(lsyncdconfig):
 	print "Configfile for lsyncd did not exist. Creating..."
 	open(configfile,'w').close()
 	# Start the "first run" dialog
+	#FirstRun()
 
 # Get actions from menu and print 'em (debug)
 def menuitem_response(w, buf):
@@ -92,7 +94,7 @@ class BareShareAppIndicator:
 		# Open Settings dialog
 		pref = "Preferences"
 		settings = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-		settings.connect("activate", menuitem_response, pref)
+		settings.connect("activate", menuitem_response, PrefD())
 		settings.show()
 		self.menu.append(settings)
 
@@ -163,6 +165,44 @@ class BareShareAppIndicator:
 def main():
 	gtk.main()
 	return 0
+
+# First run
+class FirstRun(gtk.Window):
+    def __init__(self):
+        super(FirstRun, self).__init__()
+        
+        self.set_title("First run guide - Add share")
+        self.set_size_request(250, 150)
+        self.set_position(gtk.WIN_POS_CENTER)
+
+        try:
+            self.set_icon_from_file(icon)
+        except Exception, e:
+            print e.message
+            sys.exit(1)
+
+        self.connect("destroy", gtk.main_quit) # Change so it wont kill the indicator too
+
+        self.show()
+
+# Preferences dialog
+class PrefD(gtk.Window):
+    def __init__(self):
+        super(PrefD, self).__init__()
+        
+        self.set_title(gtk.STOCK_PREFERENCES)
+        self.set_size_request(250, 150)
+        self.set_position(gtk.WIN_POS_CENTER)
+
+        try:
+            self.set_icon_from_file(icon)
+        except Exception, e:
+            print e.message
+            sys.exit(1)
+
+        self.connect("destroy", gtk.main_quit) # Change so it wont kill the indicator too
+
+        self.show()
 
 if __name__ == "__main__":
 	indicator = BareShareAppIndicator()
