@@ -32,6 +32,9 @@ home = os.getenv('HOME')
 configdir = home + "/.bareshare"
 configfile = home + "/.bareshare/config.xml"
 
+# Some other variables
+icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
+
 # Check if config files and dirs exist. If not, create them.
 if not os.path.exists(configdir):
 	print "Config dir and file did not exist. Creating..."
@@ -48,10 +51,10 @@ def menuitem_response(w, buf):
 class BareShareAppIndicator:
 
 	def __init__(self):
-		self.ind = appindicator.Indicator ("BareShare", "nautilus", appindicator.CATEGORY_APPLICATION_STATUS)
+		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
 		self.ind.set_attention_icon ("indicator-messages-new")
-		self.ind.set_icon("nautilus")
+		self.ind.set_icon(icon)
 
 		# Create a menu
 		self.menu = gtk.Menu()
@@ -77,6 +80,8 @@ class BareShareAppIndicator:
 #		addprofile.connect("activate", self.show_filechooser, None)
 #		addprofile.show()
 #		self.pmenu.append(addprofile)
+
+		# Pause/Unpause sync
 
 		# Open Settings dialog
 		pref = "Preferences"
@@ -118,14 +123,15 @@ class BareShareAppIndicator:
 		dialog.set_name('BareShare')
 
 		# Add a application icon to the dialog
-#		dialog.set_logo(gtk.gdk.pixbuf_new_from_file("abc.png"))
-#		dialog.set_logo(gtk.set_icon("nautilus"))
+		dialog.set_logo(gtk.gdk.pixbuf_new_from_file("/home/daniel/Dokument/BareShare/icons/bareshare-light.png"))
 
 		# Set the application version
 		dialog.set_version('0.1')
 
-		# Pass a list of authors.
-		dialog.set_authors('Soon')
+		# Set a list of authors.
+		dialog.set_authors(['Daniel Holm - Dev', 'Icons by Gentleface - http://www.gentleface.com/'])
+
+		# "coyright" - I'd like to see copyleft ;)
 	        dialog.set_copyright("Daniel Holm")
 
 		# Add a short comment about the application.
