@@ -26,6 +26,7 @@ import gobject
 import appindicator
 import pynotify
 import os
+import xml.dom.minidom
 
 # Settingsdir and -file.
 home = os.getenv('HOME')
@@ -35,6 +36,62 @@ configfile = home + "/.bareshare/config.xml"
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
 
+# Get the needed info from the config file
+dom = xml.dom.minidom.parse(configfile)
+
+def getText(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+def handleSlideshow(slideshow):
+    handleSlideshowTitle(slideshow.getElementsByTagName("name")[0])
+    shares = slideshow.getElementsByTagName("share")
+    handleToc(shares)
+    handleSlides(shares)
+
+def handleSlides(shares):
+    for share in shares:
+        handleSlide(share)
+
+def handleSlide(share):
+    handleSlideTitle(share.getElementsByTagName("name")[0])
+    handleURLs(share.getElementsByTagName("locale_url"))
+
+def handleSlideshowTitle(name):
+    realname = getText(name.childNodes)
+    print realname
+
+def handleSlideTitle(name):
+    name = getText(name.childNodes)
+    print name
+
+def handleURLs(locale_url):
+    for url in locale_url:
+        handleURL(url)
+
+def handleURL(locale_url):
+    l_url = getText(locale_url.childNodes)
+    print l_url
+
+def handleToc(shares):
+    for share in shares:
+        name = share.getElementsByTagName("name")[0]
+        share_name = getText(name.childNodes)
+
+handleSlideshow(dom)
+
+
+# Start the sync daemon in the background
+# os.system("lsyncd -rsyncssh /home remotehost.org backup-home/")
+
+
+# When starting, save the pid of the sync process
+#pid = os.system("ps -ef | awk '/process/{ print $2 }'")
+#print pid
+
 # Check if config files and dirs exist. If not, create them.
 if not os.path.exists(configdir):
 	print "Config dir and file did not exist. Creating..."
@@ -43,9 +100,9 @@ if not os.path.exists(configfile):
 	print "Configfile did not exist. Creating..."
 	open(configfile,'w').close()
 
+# Get actions from menu and print 'em (debug)
 def menuitem_response(w, buf):
 	print buf
-
 
 # Creates the class for the application
 class BareShareAppIndicator:
@@ -53,7 +110,6 @@ class BareShareAppIndicator:
 	def __init__(self):
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
-		self.ind.set_attention_icon ("indicator-messages-new")
 		self.ind.set_icon(icon)
 
 		# Create a menu
@@ -82,6 +138,11 @@ class BareShareAppIndicator:
 #		self.pmenu.append(addprofile)
 
 		# Pause/Unpause sync
+		ppust = "Pause Sync"
+		ppus = gtk.MenuItem(ppust)
+		ppus.connect("activate", menuitem_response, ppus)
+		ppus.show()
+		self.menu.append(ppus)
 
 		# Open Settings dialog
 		pref = "Preferences"
