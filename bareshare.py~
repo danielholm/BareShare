@@ -73,7 +73,6 @@ class BareShareAppIndicator:
 		self.menu = gtk.Menu()
 	
         	# Dynamic label here
-		# Show transfer progress
 
 		# Open Profile Creator
 		add = "Add Share"
