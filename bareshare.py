@@ -75,6 +75,7 @@ class BareShareAppIndicator:
         	# Dynamic label here
 		label = gtk.MenuItem()
 		label.set_label("BareShare")
+		label.set_sensitive(False)
 		label.show()
 		self.menu.append(label)
 
@@ -84,6 +85,7 @@ class BareShareAppIndicator:
 #		progress.set_orientation(gtk.PROGRESS_RIGHT_TO_LEFT)
 #		progress.pulse()
 #		progress.set_text("All files are up to date")
+#		label.set_sensitive(False)
 #		progress.show()
 #		self.menu.append(progress)
 
@@ -97,9 +99,7 @@ class BareShareAppIndicator:
 		# Pause/Resume sync
 		# Check weather lsyncd is running or not
 		current = self.getStatus()
-#		ppus = gtk.MenuItem(current + " Sync")
-		ppus = gtk.MenuItem()
-		ppus.set_label(current + " Sync")
+		ppus = gtk.MenuItem(current + " Sync")
 		ppus.connect("activate", self.pauseUn, current)
 		ppus.show()
 		self.menu.append(ppus)
@@ -216,10 +216,11 @@ class BareShareAppIndicator:
 		if data == "Pause":
 			print "Killing lsyncd"
 			os.system("killall -9 lsyncd")
+			ppus.set_text("Resume Sync")
 		else:
 			print "Starting lsyncd again"
 			os.system("lsyncd " + lsyncdconfig + " &")
-
+			ppus.set_text("Pause Sync")
 
 def main():
 	gtk.main()
