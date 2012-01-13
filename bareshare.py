@@ -39,14 +39,10 @@ lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
 
 # Get the needed info from the config file
+# Later
 
 # Start the sync daemon in the background
 # os.system("lsyncd" + lsyncdconfig)
-
-# When starting, save the pid of the sync process
-#pid = os.system("ps -ef | awk '/process/{ print $2 }'")
-#print pid
-
 
 # Creates the class for the application
 class BareShareAppIndicator:
