@@ -86,10 +86,14 @@ class BareShareAppIndicator:
 		add_share.show()
 		self.menu.append(add_share)
 
-		# Pause/Unpause sync
-		ppust = "Pause Sync"
-		ppus = gtk.MenuItem(ppust)
-		ppus.connect("activate", self.pauseUn, "pause")
+		# Pause/Resume sync
+		# Check weather lsyncd is running or not
+		if os.system("pgrep lsyncd"):
+			current = "Resume"
+		else:
+			current = "Pause"
+		ppus = gtk.MenuItem(current + " Sync")
+		ppus.connect("activate", self.pauseUn, current)
 		ppus.show()
 		self.menu.append(ppus)
 
@@ -121,6 +125,7 @@ class BareShareAppIndicator:
 
 		self.ind.set_menu(self.menu)
 
+	# Close the indicator and kill the sync daemon
 	def quit(self, widget, data=None):
 		os.system("killall -9 lsyncd")
 		gtk.main_quit()
@@ -193,7 +198,7 @@ class BareShareAppIndicator:
 	# Pause or unoause funciton
 	def pauseUn(self, widget, data):
 		print data # Debug
-		if data == "pause":
+		if data == "Pause":
 			print "Killing lsyncd"
 			os.system("killall -9 lsyncd")
 		else:
