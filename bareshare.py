@@ -122,6 +122,7 @@ class BareShareAppIndicator:
 		self.ind.set_menu(self.menu)
 
 	def quit(self, widget, data=None):
+		os.system("killall -9 lsyncd")
 		gtk.main_quit()
 
 	# About
