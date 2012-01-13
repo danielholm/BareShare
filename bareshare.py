@@ -47,25 +47,27 @@ icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
 #pid = os.system("ps -ef | awk '/process/{ print $2 }'")
 #print pid
 
-# Check if config files and dirs exist. If not, create them.
-if not os.path.exists(configdir):
-	print "Config dir and file did not exist. Creating..."
-	os.makedirs(configdir)
-if not os.path.exists(configfile):
-	print "Configfile did not exist. Creating..."
-	open(configfile,'w').close()
-if not os.path.exists(lsyncdconfig):
-	print "Configfile for lsyncd did not exist. Creating..."
-	open(configfile,'w').close()
-	# Start the "first run" dialog
-	#FirstRun()
-
-# Get actions from menu and print 'em (debug)
-def menuitem_response(w, buf):
-	print buf
 
 # Creates the class for the application
 class BareShareAppIndicator:
+
+	# Check if config files and dirs exist. If not, create them.
+	if not os.path.exists(configdir):
+		print "Config dir and file did not exist. Creating..."
+		os.makedirs(configdir)
+	if not os.path.exists(configfile):
+		print "Configfile did not exist. Creating..."
+		open(configfile,'w').close()
+	if not os.path.exists(lsyncdconfig):
+		print "Configfile for lsyncd did not exist. Creating..."
+		open(configfile,'w').close()
+		# Start the "first run" dialog
+		# self.first_run()
+
+	# Get actions from menu and print 'em (debug)
+	def menuitem_response(w, buf):
+		print buf
+
 	def __init__(self):
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
@@ -77,24 +79,24 @@ class BareShareAppIndicator:
         	# Dynamic label here
 		# Show transfer progress
 
-		# Open Profile Creator
+		# Add share guide
 		add = "Add Share"
 		add_share = gtk.ImageMenuItem(gtk.STOCK_ADD)
-		add_share.connect("activate", menuitem_response, add)
+		add_share.connect("activate", self.first_run, None)
 		add_share.show()
 		self.menu.append(add_share)
 
 		# Pause/Unpause sync
 		ppust = "Pause Sync"
 		ppus = gtk.MenuItem(ppust)
-		ppus.connect("activate", menuitem_response, ppus)
+		ppus.connect("activate", self.menuitem_response)
 		ppus.show()
 		self.menu.append(ppus)
 
-		# Open Settings dialog
+		# Open preferences dialog
 		pref = "Preferences"
 		settings = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-		settings.connect("activate", menuitem_response, PrefD())
+		settings.connect("activate", self.prefD, None)
 		settings.show()
 		self.menu.append(settings)
 
@@ -162,47 +164,34 @@ class BareShareAppIndicator:
 	def hide_dialog(self, widget, data):
 		widget.hide()
 
+	# First run
+	def first_run(self, widget, data):
+		first = gtk.MessageDialog(None, 
+		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
+		    gtk.BUTTONS_CLOSE, "Not yet implented")
+
+		first.set_title("First run guide - Add share")
+		first.set_size_request(250, 150)
+		first.set_position(gtk.WIN_POS_CENTER)
+		first.run()
+		first.destroy()
+
+
+	# Preferences window
+	def prefD(self, widget, data):
+		pref = gtk.MessageDialog(None, 
+		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
+		    gtk.BUTTONS_CLOSE, "Not yet implented")
+
+		pref.set_title("Preferences")
+		pref.set_size_request(500, 300)
+		pref.set_position(gtk.WIN_POS_CENTER)
+		pref.run()
+		pref.destroy()
+
 def main():
 	gtk.main()
 	return 0
-
-# First run
-class FirstRun(gtk.Window):
-    def __init__(self):
-        super(FirstRun, self).__init__()
-        
-        self.set_title("First run guide - Add share")
-        self.set_size_request(250, 150)
-        self.set_position(gtk.WIN_POS_CENTER)
-
-        try:
-            self.set_icon_from_file(icon)
-        except Exception, e:
-            print e.message
-            sys.exit(1)
-
-        self.connect("destroy", gtk.main_quit) # Change so it wont kill the indicator too
-
-        self.show()
-
-# Preferences dialog
-class PrefD(gtk.Window):
-    def __init__(self):
-        super(PrefD, self).__init__()
-        
-        self.set_title(gtk.STOCK_PREFERENCES)
-        self.set_size_request(250, 150)
-        self.set_position(gtk.WIN_POS_CENTER)
-
-        try:
-            self.set_icon_from_file(icon)
-        except Exception, e:
-            print e.message
-            sys.exit(1)
-
-        self.connect("destroy", gtk.main_quit) # Change so it wont kill the indicator too
-
-        self.show()
 
 if __name__ == "__main__":
 	indicator = BareShareAppIndicator()
