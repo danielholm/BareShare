@@ -73,7 +73,19 @@ class BareShareAppIndicator:
 		self.menu = gtk.Menu()
 	
         	# Dynamic label here
-		# Show transfer progress
+		label = gtk.MenuItem()
+		label.set_label("BareShare")
+		label.show()
+		self.menu.append(label)
+
+		# Show transfer progress - This wont apparentely with an indicator...
+#		progress = gtk.ProgressBar(adjustment=None)
+#		progress.set_fraction(fraction)
+#		progress.set_orientation(gtk.PROGRESS_RIGHT_TO_LEFT)
+#		progress.pulse()
+#		progress.set_text("All files are up to date")
+#		progress.show()
+#		self.menu.append(progress)
 
 		# Add share guide
 		add = "Add Share"
@@ -85,7 +97,9 @@ class BareShareAppIndicator:
 		# Pause/Resume sync
 		# Check weather lsyncd is running or not
 		current = self.getStatus()
-		ppus = gtk.MenuItem(current + " Sync")
+#		ppus = gtk.MenuItem(current + " Sync")
+		ppus = gtk.MenuItem()
+		ppus.set_label(current + " Sync")
 		ppus.connect("activate", self.pauseUn, current)
 		ppus.show()
 		self.menu.append(ppus)
@@ -130,7 +144,7 @@ class BareShareAppIndicator:
 		else:
 			current = "Pause"
 			return current
-
+			
 	# About
 	def show_about(self, widget, data):
 		# Create AboutDialog object
@@ -196,7 +210,7 @@ class BareShareAppIndicator:
 		pref.run()
 		pref.destroy()
 
-	# Pause or unoause funciton
+	# Pause or unpause function
 	def pauseUn(self, widget, data):
 		print data # Debug
 		if data == "Pause":
