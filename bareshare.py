@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # BareShare
-# Authors: Daniel Holm, <admin@danielholm.se>, 120110
+# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120113
 #
 # This program is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU Lesser General Public License version 3, as published by the 
@@ -42,7 +42,7 @@ icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
 # Later
 
 # Start the sync daemon in the background
-# os.system("lsyncd" + lsyncdconfig)
+# os.system("lsyncd" + lsyncdconfig + " &")
 
 # Creates the class for the application
 class BareShareAppIndicator:
@@ -84,10 +84,7 @@ class BareShareAppIndicator:
 
 		# Pause/Resume sync
 		# Check weather lsyncd is running or not
-		if os.system("pgrep lsyncd"):
-			current = "Resume"
-		else:
-			current = "Pause"
+		current = self.getStatus()
 		ppus = gtk.MenuItem(current + " Sync")
 		ppus.connect("activate", self.pauseUn, current)
 		ppus.show()
@@ -125,6 +122,14 @@ class BareShareAppIndicator:
 	def quit(self, widget, data=None):
 		os.system("killall -9 lsyncd")
 		gtk.main_quit()
+
+	def getStatus(data):
+		if os.system("pgrep lsyncd"):
+			current = "Resume"
+			return current
+		else:
+			current = "Pause"
+			return current
 
 	# About
 	def show_about(self, widget, data):
@@ -199,7 +204,7 @@ class BareShareAppIndicator:
 			os.system("killall -9 lsyncd")
 		else:
 			print "Starting lsyncd again"
-			os.system("lsyncd " + lsyncdconfig)
+			os.system("lsyncd " + lsyncdconfig + " &")
 
 
 def main():
