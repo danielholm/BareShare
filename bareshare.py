@@ -89,7 +89,7 @@ class BareShareAppIndicator:
 		# Pause/Unpause sync
 		ppust = "Pause Sync"
 		ppus = gtk.MenuItem(ppust)
-		ppus.connect("activate", self.menuitem_response)
+		ppus.connect("activate", self.pauseUn, "pause")
 		ppus.show()
 		self.menu.append(ppus)
 
@@ -188,6 +188,17 @@ class BareShareAppIndicator:
 		pref.set_position(gtk.WIN_POS_CENTER)
 		pref.run()
 		pref.destroy()
+
+	# Pause or unoause funciton
+	def pauseUn(self, widget, data):
+		print data # Debug
+		if data == "pause":
+			print "Killing lsyncd"
+			os.system("killall -9 lsyncd")
+		else:
+			print "Starting lsyncd again"
+			os.system("lsyncd " + lsyncdconfig)
+
 
 def main():
 	gtk.main()
