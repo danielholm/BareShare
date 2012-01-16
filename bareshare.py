@@ -38,6 +38,10 @@ lsyncdlog = home + "/.bareshare/lsyncd.log"
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
 
+# Messages
+startingM = "Starting..."
+syncingM = "Syncing..."
+
 # Get the needed info from the config file
 # Later
 
@@ -74,12 +78,17 @@ class BareShareAppIndicator:
 	
         	# Dynamic label here
 		# Get the last row from log
-		info = self.lsyncdOutput()
-		label = gtk.MenuItem()
-		label.set_label(info)
-		label.set_sensitive(False)
-		label.show()
-		self.menu.append(label)
+#		info = self.lsyncdOutput()
+		self.label = gtk.MenuItem()
+		self.label.set_label(startingM)
+		self.label.set_sensitive(False)
+		self.label.show()
+		self.menu.append(self.label)
+
+		# Separator
+		sep = gtk.SeparatorMenuItem()
+		sep.show()
+		self.menu.append(sep)
 
 		# Add share guide
 		add = "Add Share"
@@ -93,6 +102,7 @@ class BareShareAppIndicator:
 		self.ppus = gtk.MenuItem()
 		self.ppus.set_label("Pause Sync")
 		self.ppus.connect("activate", self.pauseUn)
+#		self.ppus.connect("activate", self.lsyncdOutput)
 		self.ppus.show()
 		self.menu.append(self.ppus)
 
@@ -131,18 +141,26 @@ class BareShareAppIndicator:
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
+		# get pid
+		pid = os.system("pidof -s lsyncd")
 		# Check if lsyncd is running
 		if os.system("pgrep lsyncd"): #if it isnt
 			print "Starting lsyncd again"
-			os.system("lsyncd " + lsyncdconfig + " &")
+			# Resume sync
+			os.system("kill -CONT " + pid)
 			self.ppus.set_label("Pause Sync")
+			self.label.set_label(startingM)
 
 		else: # if it is
 			print "Killing lsyncd"
-			os.system("killall -9 lsyncd")
+			# Pause sync
+			os.system("kill -STOP " + pid)
 			self.ppus.set_label("Resume Sync")
+			self.label.set_label("Paused")
 
-	def lsyncdOutput(data):
+	gobject.timeout_add(1000, lsyncdOutput)
+
+	def lsyncdOutput(self, widget):
 		# Get the last row from log file
 		fileHandle = open ( lsyncdlog,"r" )
 		lineList = fileHandle.readlines()
@@ -157,21 +175,17 @@ class BareShareAppIndicator:
 			# Then strip it down to just the data we need.
 			info = lastline[-2:]
 			print info
-			return info
+			self.label.set_label(info)
+
 		# Standby message
 		if "building" in lastline:
-			return "Building file list..."
+			self.label.set_label("Building file list...")
 		if "recursive startup rsync" in lastline:
-			return "Building file list..."
+			self.label.set_label("Building file list...")
 		
 		# If neither
 		else:
-			return "Syncing..."
-
-#		label = gtk.MenuItem()
-#		label.get_label(info)
-#		statusInfo.show()
-#		menuItem.append(statusInfo)
+			self.label.set_label(syncingM)
 		
 			
 	# About
