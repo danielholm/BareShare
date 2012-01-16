@@ -27,13 +27,13 @@ import appindicator
 import pynotify
 import os
 import sys
-import xml.dom.minidom
 
 # Settingsdir and -file.
 home = os.getenv('HOME')
 configdir = home + "/.bareshare"
 configfile = home + "/.bareshare/config.xml"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
+lsyncdlog = home + "/.bareshare/lsyncd.log"
 
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
@@ -73,8 +73,10 @@ class BareShareAppIndicator:
 		self.menu = gtk.Menu()
 	
         	# Dynamic label here
+		# Get the last row from log
+		info = self.lsyncdOutput()
 		label = gtk.MenuItem()
-		label.set_label("BareShare")
+		label.set_label(info)
 		label.set_sensitive(False)
 		label.show()
 		self.menu.append(label)
@@ -144,6 +146,36 @@ class BareShareAppIndicator:
 		else:
 			current = "Pause"
 			return current
+
+	def lsyncdOutput(data):
+		# Get the last row from log file
+		fileHandle = open ( lsyncdlog,"r" )
+		lineList = fileHandle.readlines()
+		fileHandle.close()
+		lastline = lineList[-1]
+#		print lastline
+#		return lastline
+
+		# Then be sure that the row contains the needed info
+		if "value" in lastline:
+			print "True"
+			# Then strip it down to just the data we need.
+			info = lastline[-2:]
+			print info
+			return info
+		# Standby message
+		if "building" in lastline:
+			return "Building file list..."
+		
+		# If neither
+		else:
+			return "Syncing..."
+
+#		menuItem = data.get_label()
+#		statusInfo = menuItem(info)
+#		statusInfo.show()
+#		menuItem.append(statusInfo)
+		
 			
 	# About
 	def show_about(self, widget, data):
