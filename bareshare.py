@@ -46,7 +46,7 @@ syncingM = "Syncing..."
 # Later
 
 # Start the sync daemon in the background
-#os.system("lsyncd " + lsyncdconfig + " &")
+os.system("lsyncd " + lsyncdconfig + " &")
 
 # Creates the class for the application
 class BareShareAppIndicator:
