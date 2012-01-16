@@ -46,7 +46,7 @@ syncingM = "Syncing..."
 # Later
 
 # Start the sync daemon in the background
-os.system("lsyncd " + lsyncdconfig + " &")
+#os.system("lsyncd " + lsyncdconfig + " &")
 
 # Creates the class for the application
 class BareShareAppIndicator:
@@ -69,6 +69,9 @@ class BareShareAppIndicator:
 		print buf
 
 	def __init__(self):
+
+		gobject.timeout_add(1000, self.lsyncdOutput, None)
+
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
 		self.ind.set_icon(icon)
@@ -158,8 +161,6 @@ class BareShareAppIndicator:
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 
-	gobject.timeout_add(1000, lsyncdOutput)
-
 	def lsyncdOutput(self, widget):
 		# Get the last row from log file
 		fileHandle = open ( lsyncdlog,"r" )
@@ -186,6 +187,8 @@ class BareShareAppIndicator:
 		# If neither
 		else:
 			self.label.set_label(syncingM)
+
+		return True #Have to return True for it to keep on
 		
 			
 	# About
