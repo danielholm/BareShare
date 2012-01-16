@@ -1,1 +1,27 @@
-SOON
+BareShare is a backup service just like ie. Dropbox, Ubuntu One, SparkleShare and so on. 
+
+The name is partly a Swedish wordplay meaning ”Just share!”, but also that it Backups, using Rsync, and then just shares.
+
+I created it because I wanted a free, open source backup service that was fast, secure and simple. Rsync (with the help of lsyncd) does the job and together with a simple indicator applet, it is good to go!
+
+Dependencies:
+Rsync
+Lsyncd
+SSH
+PyGTK
+
+BareShare 0.1 - Released 120116
+
+This is the very first release which is really rough around the edges and It probably just works for me as of just now. I'll fix it later.
+
+How it works as of now, you have to have rsync and lsyncd installed, have a system supporting indicator applets, Python, GTK and have a working SSH connection to your remote server since it uses your SSH keys at the moment.
+
+Your ldsyncd.conf file has to be in ~/.bareshare/.
+
+It basically runs lsyncd for you and is being handled by the appindicator.
+
+
+Comming up: 
+0.2
+First run guide that acually helps you get your stuff up (client only - you'll have to set up your server by yourself)
+libnotify support
