@@ -42,7 +42,7 @@ icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
 # Later
 
 # Start the sync daemon in the background
-# os.system("lsyncd" + lsyncdconfig + " &")
+os.system("lsyncd " + lsyncdconfig + " &")
 
 # Creates the class for the application
 class BareShareAppIndicator:
@@ -81,16 +81,6 @@ class BareShareAppIndicator:
 		label.show()
 		self.menu.append(label)
 
-		# Show transfer progress - This wont apparentely with an indicator...
-#		progress = gtk.ProgressBar(adjustment=None)
-#		progress.set_fraction(fraction)
-#		progress.set_orientation(gtk.PROGRESS_RIGHT_TO_LEFT)
-#		progress.pulse()
-#		progress.set_text("All files are up to date")
-#		label.set_sensitive(False)
-#		progress.show()
-#		self.menu.append(progress)
-
 		# Add share guide
 		add = "Add Share"
 		add_share = gtk.ImageMenuItem(gtk.STOCK_ADD)
@@ -100,11 +90,11 @@ class BareShareAppIndicator:
 
 		# Pause/Resume sync
 		# Check weather lsyncd is running or not
-		current = self.getStatus()
-		ppus = gtk.MenuItem(current + " Sync")
-		ppus.connect("activate", self.pauseUn, current)
-		ppus.show()
-		self.menu.append(ppus)
+		self.ppus = gtk.MenuItem()
+		self.ppus.set_label("Pause Sync")
+		self.ppus.connect("activate", self.pauseUn)
+		self.ppus.show()
+		self.menu.append(self.ppus)
 
 		# Open preferences dialog
 		pref = "Preferences"
@@ -139,13 +129,18 @@ class BareShareAppIndicator:
 		os.system("killall -9 lsyncd")
 		gtk.main_quit()
 
-	def getStatus(data):
-		if os.system("pgrep lsyncd"):
-			current = "Resume"
-			return current
-		else:
-			current = "Pause"
-			return current
+	# Pause or unpause function
+	def pauseUn(self, widget):
+		# Check if lsyncd is running
+		if os.system("pgrep lsyncd"): #if it isnt
+			print "Starting lsyncd again"
+			os.system("lsyncd " + lsyncdconfig + " &")
+			self.ppus.set_label("Pause Sync")
+
+		else: # if it is
+			print "Killing lsyncd"
+			os.system("killall -9 lsyncd")
+			self.ppus.set_label("Resume Sync")
 
 	def lsyncdOutput(data):
 		# Get the last row from log file
@@ -166,13 +161,15 @@ class BareShareAppIndicator:
 		# Standby message
 		if "building" in lastline:
 			return "Building file list..."
+		if "recursive startup rsync" in lastline:
+			return "Building file list..."
 		
 		# If neither
 		else:
 			return "Syncing..."
 
-#		menuItem = data.get_label()
-#		statusInfo = menuItem(info)
+#		label = gtk.MenuItem()
+#		label.get_label(info)
 #		statusInfo.show()
 #		menuItem.append(statusInfo)
 		
@@ -241,18 +238,6 @@ class BareShareAppIndicator:
 		pref.set_position(gtk.WIN_POS_CENTER)
 		pref.run()
 		pref.destroy()
-
-	# Pause or unpause function
-	def pauseUn(self, widget, data):
-		print data # Debug
-		if data == "Pause":
-			print "Killing lsyncd"
-			os.system("killall -9 lsyncd")
-			ppus.set_text("Resume Sync")
-		else:
-			print "Starting lsyncd again"
-			os.system("lsyncd " + lsyncdconfig + " &")
-			ppus.set_text("Pause Sync")
 
 def main():
 	gtk.main()
