@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # BareShare
-# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120113
+# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120116
 #
 # This program is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU Lesser General Public License version 3, as published by the 
@@ -34,19 +34,29 @@ configdir = home + "/.bareshare"
 configfile = home + "/.bareshare/config.xml"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
+rsynclog = home + "/.bareshare/rsync.log"
 
 # Some other variables
-icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png"
+icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
+trickle="trickle -s -d " + download + " -u " + upload + " "
 
 # Messages
 startingM = "Starting..."
 syncingM = "Syncing..."
+finishedM = "All files are up to date"
+buildM = "Building file list..."
+
+# Processes 
+lsyncd=os.system("lsyncd " + lsyncdconfig + " &")
+rsync=os.system("rsync --log-file=" + rsynclog + "all of the parameters from settings file")
 
 # Get the needed info from the config file
-# Later
+# Later in 0.2 perhaps
 
 # Start the sync daemon in the background
 os.system("lsyncd " + lsyncdconfig + " &")
+# Also start rsync to see if all of the files are up to date
+#os.system("rsync --log-file=" + rsynclog + "all of the parameters from settings file")
 
 # Creates the class for the application
 class BareShareAppIndicator:
@@ -61,7 +71,7 @@ class BareShareAppIndicator:
 	if not os.path.exists(lsyncdconfig):
 		print "Configfile for lsyncd did not exist. Creating..."
 		open(configfile,'w').close()
-		# Start the "first run" dialog
+		# Start the "first run" dialog comes in 0.2
 		# self.first_run()
 
 	# Get actions from menu and print 'em (debug)
@@ -180,9 +190,9 @@ class BareShareAppIndicator:
 
 		# Standby message
 		if "building" in lastline:
-			self.label.set_label("Building file list...")
+			self.label.set_label(buildM)
 		if "recursive startup rsync" in lastline:
-			self.label.set_label("Building file list...")
+			self.label.set_label(buildM)
 		
 		# If neither
 		else:

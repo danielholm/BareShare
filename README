@@ -23,5 +23,7 @@ It basically runs lsyncd for you and is being handled by the appindicator.
 
 Comming up: 
 0.2
-First run guide that acually helps you get your stuff up (client only - you'll have to set up your server by yourself)
-libnotify support
+* First run guide that acually helps you get your stuff up (client only - you'll have to set up your server by yourself)
+* libnotify support
+* Bandwith limit
+* Better rsync support
