@@ -27,6 +27,7 @@ import appindicator
 import pynotify
 import os
 import sys
+import subprocess
 
 # Settingsdir and -file.
 home = os.getenv('HOME')
@@ -36,25 +37,29 @@ lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
 rsynclog = home + "/.bareshare/rsync.log"
 
+# Get settings from config
+#download=
+#upload=
+
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
-trickle="trickle -s -d " + download + " -u " + upload + " "
+#trickle="trickle -s -d " + download + " -u " + upload + " "
 
 # Messages
 startingM = "Starting..."
 syncingM = "Syncing..."
-finishedM = "All files are up to date"
+finishedM = "All files are up to date."
 buildM = "Building file list..."
 
 # Processes 
-lsyncd=os.system("lsyncd " + lsyncdconfig + " &")
-rsync=os.system("rsync --log-file=" + rsynclog + "all of the parameters from settings file")
+lsyncd="lsyncd " + lsyncdconfig + " &"
+#rsync=os.system("rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file")
 
 # Get the needed info from the config file
 # Later in 0.2 perhaps
 
 # Start the sync daemon in the background
-os.system("lsyncd " + lsyncdconfig + " &")
+os.system(lsyncd)
 # Also start rsync to see if all of the files are up to date
 #os.system("rsync --log-file=" + rsynclog + "all of the parameters from settings file")
 
@@ -158,16 +163,20 @@ class BareShareAppIndicator:
 		pid = os.system("pidof -s lsyncd")
 		# Check if lsyncd is running
 		if os.system("pgrep lsyncd"): #if it isnt
-			print "Starting lsyncd again"
+			print "Debug: Starting lsyncd again"
 			# Resume sync
-			os.system("kill -CONT " + pid)
+#			os.system("kill -CONT %i"%pid) # DOesnt work yet
+			# Start from the beginning
+			os.system(lsyncd)
 			self.ppus.set_label("Pause Sync")
 			self.label.set_label(startingM)
 
 		else: # if it is
-			print "Killing lsyncd"
+			print "Debug: Killing lsyncd"
 			# Pause sync
-			os.system("kill -STOP " + pid)
+#			os.system("kill -STOP %i"%pid) # Don't work yet
+			# Kill it instead.
+			os.system("killall -9 lsyncd")
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 
@@ -180,6 +189,8 @@ class BareShareAppIndicator:
 #		print lastline
 #		return lastline
 
+		pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+
 		# Then be sure that the row contains the needed info
 		if "value" in lastline:
 			print "True"
@@ -188,15 +199,19 @@ class BareShareAppIndicator:
 			print info
 			self.label.set_label(info)
 
-		# Standby message
-		if "building" in lastline:
-			self.label.set_label(buildM)
-		if "recursive startup rsync" in lastline:
-			self.label.set_label(buildM)
-		
-		# If neither
+		if pid: #if it isnt running
+			self.label.set_label("Paused")
+
 		else:
-			self.label.set_label(syncingM)
+			# Standby message
+			if "building" in lastline:
+				self.label.set_label(buildM)
+			if "recursive startup rsync" in lastline:
+				self.label.set_label(buildM)
+			if "Finished" in lastline:
+				self.label.set_label(finishedM)
+			if "Rsyncing list" in lastline:
+				self.label.set_label(syncingM)
 
 		return True #Have to return True for it to keep on
 		
