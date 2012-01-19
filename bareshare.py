@@ -43,6 +43,7 @@ rsynclog = home + "/.bareshare/rsync.log"
 
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
+picon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark-passive.png" # Fix 
 #trickle="trickle -s -d " + download + " -u " + upload + " "
 
 # Messages
@@ -53,7 +54,7 @@ buildM = "Building file list..."
 
 # Processes 
 lsyncd="lsyncd " + lsyncdconfig + " &"
-#rsync=os.system("rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file")
+#rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &"
 
 # Get the needed info from the config file
 # Later in 0.2 perhaps
@@ -61,7 +62,9 @@ lsyncd="lsyncd " + lsyncdconfig + " &"
 # Start the sync daemon in the background
 os.system(lsyncd)
 # Also start rsync to see if all of the files are up to date
-#os.system("rsync --log-file=" + rsynclog + "all of the parameters from settings file")
+# Do this for every share in the settings.conf
+#foreach share:
+#	os.system(rsync)
 
 # Creates the class for the application
 class BareShareAppIndicator:
@@ -89,7 +92,7 @@ class BareShareAppIndicator:
 
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
-		self.ind.set_icon(icon)
+		self.ind.set_icon(icon) # THis should change on pause
 
 		# Create a menu
 		self.menu = gtk.Menu()
@@ -160,9 +163,9 @@ class BareShareAppIndicator:
 	# Pause or unpause function
 	def pauseUn(self, widget):
 		# get pid
-		pid = os.system("pidof -s lsyncd")
+		pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		# Check if lsyncd is running
-		if os.system("pgrep lsyncd"): #if it isnt
+		if pid: #if it isnt
 			print "Debug: Starting lsyncd again"
 			# Resume sync
 #			os.system("kill -CONT %i"%pid) # DOesnt work yet
@@ -170,6 +173,7 @@ class BareShareAppIndicator:
 			os.system(lsyncd)
 			self.ppus.set_label("Pause Sync")
 			self.label.set_label(startingM)
+			self.ind.set_icon(icon) # Set to active icon
 
 		else: # if it is
 			print "Debug: Killing lsyncd"
@@ -179,6 +183,7 @@ class BareShareAppIndicator:
 			os.system("killall -9 lsyncd")
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
+			self.ind.set_icon(picon) # Passive icon
 
 	def lsyncdOutput(self, widget):
 		# Get the last row from log file
@@ -211,6 +216,8 @@ class BareShareAppIndicator:
 			if "Finished" in lastline:
 				self.label.set_label(finishedM)
 			if "Rsyncing list" in lastline:
+				self.label.set_label(syncingM)
+			if not "Normal:" in lastline:
 				self.label.set_label(syncingM)
 
 		return True #Have to return True for it to keep on
