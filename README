@@ -25,5 +25,5 @@ Comming up:
 0.2
 * First run guide that acually helps you get your stuff up (client only - you'll have to set up your server by yourself)
 * Notifications (libnotify)
-* Bandwith limit (trickle)
+* Bandwith limit (rsync built-in --bwlimit=)
 * Better rsync support (file scan for non uploaded files initally)

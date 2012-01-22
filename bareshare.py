@@ -38,7 +38,7 @@ lsyncdlog = home + "/.bareshare/lsyncd.log"
 rsynclog = home + "/.bareshare/rsync.log"
 
 # Get settings from config - Parse and should be lua or XML
-# Bandwith speed
+# Bandwith speed and use rsync --bwlimit=value
 #download=
 #upload=
 #shares=
@@ -46,7 +46,6 @@ rsynclog = home + "/.bareshare/rsync.log"
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
 picon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark-passive.png" # Fix 
-#trickle="trickle -s -d " + download + " -u " + upload + " "
 
 # Messages
 startingM = "Starting..."
@@ -61,6 +60,7 @@ lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
 
 # Start the sync daemon in the background
 os.system(lsyncd)
+
 # Also start rsync to see if all of the files are up to date
 # Do this for every share in the settings.conf
 #foreach share:
