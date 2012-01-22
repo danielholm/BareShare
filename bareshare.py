@@ -37,9 +37,11 @@ lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
 rsynclog = home + "/.bareshare/rsync.log"
 
-# Get settings from config
+# Get settings from config - Parse and should be lua or XML
+# Bandwith speed
 #download=
 #upload=
+#shares=
 
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
@@ -53,11 +55,9 @@ finishedM = "All files are up to date."
 buildM = "Building file list..."
 
 # Processes 
-lsyncd="lsyncd " + lsyncdconfig + " &"
-#rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &"
-
-# Get the needed info from the config file
-# Later in 0.2 perhaps
+lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
+#rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &" # Upload
+#rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &" # Download
 
 # Start the sync daemon in the background
 os.system(lsyncd)
