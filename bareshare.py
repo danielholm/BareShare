@@ -28,51 +28,64 @@ import pynotify
 import os
 import sys
 import subprocess
+from ConfigParser import SafeConfigParser
 
 # Settingsdir and -file.
 home = os.getenv('HOME')
 configdir = home + "/.bareshare"
-configfile = home + "/.bareshare/config.xml"
+configfile = home + "/.bareshare/bareshare.conf"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
 rsynclog = home + "/.bareshare/rsync.log"
 
-# Get settings from config - Parse and should be lua or XML
-# Bandwith speed and use rsync --bwlimit=value
-#download=
-#upload=
-#shares=
-
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
 picon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark-passive.png" # Fix 
+uicon ="/home/daniel/Dokument/BareShare/icons/bareshare-dark-upload.png" # Fix 
+sicon ="/home/daniel/Dokument/BareShare/icons/bareshare-dark-sync.png" # Fix 
 
 # Messages
 startingM = "Starting..."
 syncingM = "Syncing..."
 finishedM = "All files are up to date."
 buildM = "Building file list..."
-
-# Processes 
-lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
-#rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &" # Upload
-#rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &" # Download
-rsync="rsync --stats --progress -azvv -e ssh LOCALDIR REMOTEDIR --log-file="+ home + "/.bareshare/bilderrsync.log &"
-
-# Start the sync daemon in the background
-os.system(lsyncd)
-#lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], shell=True, stdout=subprocess.PIPE)
-
-# Also start rsync
-os.system(rsync)
-#rsyncRun = subprocess.Popen(["rsync","--stats","--progress","-azvv","-e","ssh", "LOCALDIR","REMOTEDIR", "--log-file=/home/daniel/.bareshare/bilderrsync.log"], shell=True, stdout=subprocess.PIPE)
-
-# Do this for every share in the settings.conf
-#foreach share:
-#	os.system(rsync)
+uploadM = "Uploading..."
 
 # Creates the class for the application
 class BareShareAppIndicator:
+	# Get settings from config (sections)
+	parser = SafeConfigParser()
+	parser.read(configfile)
+	share = parser.get('profile', 'share')
+	
+	# Bandwith speed and use rsync --bwlimit=value
+	value = 0 # Default bandwidth value
+	download = parser.get('profile', 'download')
+	upload = parser.get('profile', 'upload')
+	username = parser.get(share, 'username')
+	local = parser.get(share, 'local')
+	remote = parser.get(share, 'remote')
+	domain = parser.get(share, 'domain')
+
+	print "Settings: " + download + upload + local + " " + username+"@"+"domain"+":"+remote # Debug
+
+	# Processes 
+	lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
+	#rsync="rsync --bwlimit=upload --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Upload
+	#rsync="rsync --bwlimit=download --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Download
+	#rsync="rsync --bwlimit=0 --stats --progress -azvv -e ssh " + local + " " + username+"@"+"domain"+":"+remote --log-file="+ home + "/.bareshare/bilderrsync.log &"
+
+	# Start the sync daemon in the background
+	os.system(lsyncd)
+	#lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], shell=True, stdout=subprocess.PIPE)
+
+	# Also start rsync
+	#os.system(rsync)
+	#rsyncRun = subprocess.Popen(["rsync",,"--bwlimit="+value,"--stats","--progress","-azvv","-e","ssh", "LOCALDIR","REMOTEDIR", "--log-file="+rsynclog], shell=True, stdout=subprocess.PIPE)
+
+	# Do this for every share in the settings.conf
+	#foreach share:
+	#	os.system(rsync)
 
 	# Check if config files and dirs exist. If not, create them.
 	if not os.path.exists(configdir):
@@ -190,39 +203,53 @@ class BareShareAppIndicator:
 			self.ind.set_icon(picon) # Passive icon
 
 	def lsyncdOutput(self, widget):
-		# Get the last row from log file
-		fileHandle = open ( lsyncdlog,"r" )
-		lineList = fileHandle.readlines()
-		fileHandle.close()
-		lastline = lineList[-1]
-#		print lastline
-#		return lastline
 
-		pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+		# check if rsync' running and if it is, use it first
+		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+		if not pidR:
+			self.label.set_label(uploadM)
+			self.ind.set_icon(uicon) # uploading icon
 
-		# Then be sure that the row contains the needed info
-		if "value" in lastline:
-			print "True"
-			# Then strip it down to just the data we need.
-			info = lastline[-2:]
-			print info
-			self.label.set_label(info)
-
-		if pid: #if it isnt running
-			self.label.set_label("Paused")
-
+		# If rsync isn't running, just use lsyncd data instead
 		else:
-			# Standby message
-			if "building" in lastline:
-				self.label.set_label(buildM)
-			if "recursive startup rsync" in lastline:
-				self.label.set_label(buildM)
-			if "Finished" in lastline:
-				self.label.set_label(finishedM)
-			if "Rsyncing list" in lastline:
-				self.label.set_label(syncingM)
-			if not "Normal:" in lastline:
-				self.label.set_label(syncingM)
+			# Get the last row from log file
+			# Will be changed to use STDOUT from subprocess
+			fileHandle = open ( lsyncdlog,"r" )
+			lineList = fileHandle.readlines()
+			fileHandle.close()
+			lastline = lineList[-1]
+
+			pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+
+			# Then be sure that the row contains the needed info
+			if "value" in lastline:
+				print "True"
+				# Then strip it down to just the data we need.
+				info = lastline[-2:]
+				print info
+				self.label.set_label(info)
+
+			if pid: #if it isnt running
+				self.label.set_label("Paused")
+				self.ind.set_icon(picon) # Passive icon
+
+			else:
+				# Standby message
+				if "building" in lastline:
+					self.label.set_label(buildM)
+					self.ind.set_icon(icon) # default icon
+				if "recursive startup rsync" in lastline:
+					self.label.set_label(buildM)
+					self.ind.set_icon(icon) # default icon
+				if "Finished" in lastline:
+					self.label.set_label(finishedM)
+					self.ind.set_icon(icon) # default icon
+				if "Rsyncing list" in lastline:
+					self.label.set_label(syncingM)
+					self.ind.set_icon(sicon) # sync icon
+				if not "Normal:" in lastline:
+					self.label.set_label(syncingM)
+					self.ind.set_icon(sicon) # sync icon
 
 		return True #Have to return True for it to keep on
 			
