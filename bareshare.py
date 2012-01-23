@@ -57,11 +57,16 @@ buildM = "Building file list..."
 lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
 #rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &" # Upload
 #rsync="rsync --log-file=" + sharename + rsynclog + "all of the parameters from settings file &" # Download
+rsync="rsync --stats --progress -azvv -e ssh LOCALDIR REMOTEDIR --log-file="+ home + "/.bareshare/bilderrsync.log &"
 
 # Start the sync daemon in the background
 os.system(lsyncd)
+#lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], shell=True, stdout=subprocess.PIPE)
 
-# Also start rsync to see if all of the files are up to date
+# Also start rsync
+os.system(rsync)
+#rsyncRun = subprocess.Popen(["rsync","--stats","--progress","-azvv","-e","ssh", "LOCALDIR","REMOTEDIR", "--log-file=/home/daniel/.bareshare/bilderrsync.log"], shell=True, stdout=subprocess.PIPE)
+
 # Do this for every share in the settings.conf
 #foreach share:
 #	os.system(rsync)
@@ -98,8 +103,6 @@ class BareShareAppIndicator:
 		self.menu = gtk.Menu()
 	
         	# Dynamic label here
-		# Get the last row from log
-#		info = self.lsyncdOutput()
 		self.label = gtk.MenuItem()
 		self.label.set_label(startingM)
 		self.label.set_sensitive(False)
@@ -158,6 +161,7 @@ class BareShareAppIndicator:
 	# Close the indicator and kill the sync daemon
 	def quit(self, widget, data=None):
 		os.system("killall -9 lsyncd")
+		os.system("killall -9 rsync")
 		gtk.main_quit()
 
 	# Pause or unpause function
@@ -221,7 +225,6 @@ class BareShareAppIndicator:
 				self.label.set_label(syncingM)
 
 		return True #Have to return True for it to keep on
-		
 			
 	# About
 	def show_about(self, widget, data):
@@ -295,3 +298,4 @@ def main():
 if __name__ == "__main__":
 	indicator = BareShareAppIndicator()
 	main()
+
