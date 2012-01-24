@@ -54,42 +54,6 @@ uploadM = "Uploading..."
 
 # Creates the class for the application
 class BareShareAppIndicator:
-	# Get settings from config (sections)
-	parser = SafeConfigParser()
-	parser.read(configfile)
-	# Bandwith speed and use rsync --bwlimit=value
-	value = 0 # Default bandwidth value
-	download = parser.get('profile', 'download')
-	upload = parser.get('profile', 'upload')
-
-	shares = parser.get('profile', 'shares')
-	for share in shares.split(', '):
-		username = parser.get(share, 'username')
-		sharename = parser.get(share, 'name')
-		local = parser.get(share, 'local')
-		remote = parser.get(share, 'remote')
-		domain = parser.get(share, 'domain')
-#		print "Settings: " + download + upload + local + " " + username+"@"+"domain"+":"+remote # Debug
-		rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+home+"/.bareshare/"+share+"rsync.log &"
-		os.system(rsync) # Run rsync of each share
-
-	# Processes 
-	lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
-	#rsync="rsync --bwlimit=upload --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Upload
-	#rsync="rsync --bwlimit=download --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Download
-
-	# Start the sync daemon in the background
-	os.system(lsyncd)
-	#lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], shell=True, stdout=subprocess.PIPE)
-
-	# Also start rsync
-	#os.system(rsync)
-	#rsyncRun = subprocess.Popen(["rsync",,"--bwlimit="+value,"--stats","--progress","-azvv","-e","ssh", "LOCALDIR","REMOTEDIR", "--log-file="+rsynclog], shell=True, stdout=subprocess.PIPE)
-
-	# Do this for every share in the settings.conf
-	#foreach share:
-	#	os.system(rsync)
-
 	# Check if config files and dirs exist. If not, create them.
 	if not os.path.exists(configdir):
 		print "Config dir and file did not exist. Creating..."
@@ -108,9 +72,41 @@ class BareShareAppIndicator:
 		print buf
 
 	def __init__(self):
+		# Get settings from config (sections)
+		parser = SafeConfigParser()
+		parser.read(configfile)
+		# Bandwith speed and use rsync --bwlimit=value
+		value = 0 # Default bandwidth value
+		download = parser.get('profile', 'download')
+		upload = parser.get('profile', 'upload')
 
+		shares = parser.get('profile', 'shares')
+		for share in shares.split(', '):
+			username = parser.get(share, 'username')
+			sharename = parser.get(share, 'name')
+			local = parser.get(share, 'local')
+			remote = parser.get(share, 'remote')
+			domain = parser.get(share, 'domain')
+			remotedir = username+"@"+domain+":"+remote
+	#		print "Settings: " + download + upload + local + " " + username+"@"+"domain"+":"+remote # Debug
+			rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+home+"/.bareshare/"+share+"rsync.log &"
+			#os.system(rsync) # Run rsync of each share
+			self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+share+"rsync.log"], stdout=subprocess.PIPE)
+
+		# Processes 
+		lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
+		#rsync="rsync --bwlimit=upload --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Upload
+		#rsync="rsync --bwlimit=download --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Download
+
+		# Start the sync daemon in the background
+		os.system(lsyncd)
+		#lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], shell=True, stdout=subprocess.PIPE)
+
+		# Keep the labels updated
 		gobject.timeout_add(1000, self.lsyncdOutput, None)
+		gobject.timeout_add(1000, self.rsyncOutput, None)
 
+		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
 		self.ind.set_icon(icon) # THis should change on pause
@@ -124,6 +120,13 @@ class BareShareAppIndicator:
 		self.label.set_sensitive(False)
 		self.label.show()
 		self.menu.append(self.label)
+
+		# Dynamic Rsync label for testing
+		self.labelR = gtk.MenuItem()
+		self.labelR.set_label("Wait")
+		self.labelR.set_sensitive(False)
+		self.labelR.show()
+		self.menu.append(self.labelR)
 
 		# Separator
 		sep = gtk.SeparatorMenuItem()
@@ -184,6 +187,7 @@ class BareShareAppIndicator:
 	def pauseUn(self, widget):
 		# get pid
 		pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		# Check if lsyncd is running
 		if pid: #if it isnt
 			print "Debug: Starting lsyncd again"
@@ -191,6 +195,7 @@ class BareShareAppIndicator:
 #			os.system("kill -CONT %i"%pid) # DOesnt work yet
 			# Start from the beginning
 			os.system(lsyncd)
+			os.system(rsync)
 			self.ppus.set_label("Pause Sync")
 			self.label.set_label(startingM)
 			self.ind.set_icon(icon) # Set to active icon
@@ -201,12 +206,18 @@ class BareShareAppIndicator:
 #			os.system("kill -STOP %i"%pid) # Don't work yet
 			# Kill it instead.
 			os.system("killall -9 lsyncd")
+			os.system("killall -9 rsync")
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 			self.ind.set_icon(picon) # Passive icon
 
-	def lsyncdOutput(self, widget):
+	def rsyncOutput(self, widget):
+		self.line = self.rsyncRun.stdout.readline()
+		rsyncM = self.line.rstrip()
+		self.labelR.set_label(rsyncM)
+		print "DEBUG: "+rsyncM
 
+	def lsyncdOutput(self, widget):
 		# check if rsync' running and if it is, use it first
 		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		if not pidR:
