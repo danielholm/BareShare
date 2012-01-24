@@ -101,7 +101,7 @@ class BareShareAppIndicator:
 
 		# Keep the labels updated
 		gobject.timeout_add(1000, self.lsyncdOutput, None)
-		gobject.timeout_add(1000, self.rsyncOutput, None)
+		gobject.timeout_add(100, self.rsyncOutput, None)
 
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
@@ -187,7 +187,7 @@ class BareShareAppIndicator:
 		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		# Check if lsyncd is running
 		if pid: #if it isnt
-			print "Debug: Starting lsyncd again"
+			print "Debug: Starting lsyncd and rsync again"
 			# Resume sync
 #			os.system("kill -CONT %i"%pid) # DOesnt work yet
 			# Start from the beginning
@@ -198,7 +198,7 @@ class BareShareAppIndicator:
 			self.ind.set_icon(icon) # Set to active icon
 
 		else: # if it is
-			print "Debug: Killing lsyncd"
+			print "Debug: Killing lsyncd and rsync"
 			# Pause sync
 #			os.system("kill -STOP %i"%pid) # Don't work yet
 			# Kill it instead.
