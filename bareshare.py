@@ -28,6 +28,7 @@ import pynotify
 import os
 import sys
 import subprocess
+import csv
 from ConfigParser import SafeConfigParser
 
 # Settingsdir and -file.
@@ -56,24 +57,26 @@ class BareShareAppIndicator:
 	# Get settings from config (sections)
 	parser = SafeConfigParser()
 	parser.read(configfile)
-	share = parser.get('profile', 'share')
-	
 	# Bandwith speed and use rsync --bwlimit=value
 	value = 0 # Default bandwidth value
 	download = parser.get('profile', 'download')
 	upload = parser.get('profile', 'upload')
-	username = parser.get(share, 'username')
-	local = parser.get(share, 'local')
-	remote = parser.get(share, 'remote')
-	domain = parser.get(share, 'domain')
 
-	print "Settings: " + download + upload + local + " " + username+"@"+"domain"+":"+remote # Debug
+	shares = parser.get('profile', 'shares')
+	for share in shares.split(', '):
+		username = parser.get(share, 'username')
+		sharename = parser.get(share, 'name')
+		local = parser.get(share, 'local')
+		remote = parser.get(share, 'remote')
+		domain = parser.get(share, 'domain')
+#		print "Settings: " + download + upload + local + " " + username+"@"+"domain"+":"+remote # Debug
+		rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+home+"/.bareshare/"+share+"rsync.log &"
+		os.system(rsync) # Run rsync of each share
 
 	# Processes 
 	lsyncd="lsyncd " + lsyncdconfig + " &" # Both Upload and Download - Two-way
 	#rsync="rsync --bwlimit=upload --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Upload
 	#rsync="rsync --bwlimit=download --log-file=" + share + rsynclog + "all of the parameters from settings file &" # Download
-	#rsync="rsync --bwlimit=0 --stats --progress -azvv -e ssh " + local + " " + username+"@"+"domain"+":"+remote --log-file="+ home + "/.bareshare/bilderrsync.log &"
 
 	# Start the sync daemon in the background
 	os.system(lsyncd)
