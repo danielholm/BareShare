@@ -38,6 +38,8 @@ configfile = home + "/.bareshare/bareshare.conf"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
 
+os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
+
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
 picon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark-passive.png" # Fix 
@@ -79,6 +81,10 @@ class BareShareAppIndicator:
 		download = parser.get('profile', 'download')
 		upload = parser.get('profile', 'upload')
 		shares = parser.get('profile', 'shares')
+		# Count the shares and divide transfer speed with the shares count
+		number = (shares.count(' ')+1)
+		speed = int(upload)/int(number)
+		upload = str(speed)
 		# For each section of shares in conf, get data from its own section
 		for share in shares.split(', '):
 			username = parser.get(share, 'username')
@@ -88,10 +94,11 @@ class BareShareAppIndicator:
 			domain = parser.get(share, 'domain')
 			remotedir = username+"@"+domain+":"+remote
 			rsynclog = home + "/.bareshare/"+share+"rsync.log"
+			os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # MOve and remove old log
 			rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+rsynclog+" &"
 			# Run rsync of each share
 #			os.system(rsync) 
-			self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE)
+			self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		# Processes 
 		lsyncd="lsyncd " + lsyncdconfig + " &"
@@ -142,7 +149,6 @@ class BareShareAppIndicator:
 		self.ppus = gtk.MenuItem()
 		self.ppus.set_label("Pause Sync")
 		self.ppus.connect("activate", self.pauseUn)
-#		self.ppus.connect("activate", self.lsyncdOutput)
 		self.ppus.show()
 		self.menu.append(self.ppus)
 
@@ -178,6 +184,8 @@ class BareShareAppIndicator:
 	def quit(self, widget, data=None):
 		os.system("killall -9 lsyncd")
 		os.system("killall -9 rsync")
+#		self.rsyncRun.kill()
+
 		gtk.main_quit()
 
 	# Pause or unpause function
@@ -210,6 +218,7 @@ class BareShareAppIndicator:
 
 	# Updates the label about rsync transer data
 	def rsyncOutput(self, widget):
+#		self.linerr = self.rsyncRun.stderr.readline()
 		self.line = self.rsyncRun.stdout.readline()
 		rsyncM = self.line.rstrip()
 		self.labelR.set_label(rsyncM)
