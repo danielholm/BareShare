@@ -37,7 +37,6 @@ configdir = home + "/.bareshare"
 configfile = home + "/.bareshare/bareshare.conf"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
-rsynclog = home + "/.bareshare/rsync.log"
 
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
@@ -88,10 +87,11 @@ class BareShareAppIndicator:
 			remote = parser.get(share, 'remote')
 			domain = parser.get(share, 'domain')
 			remotedir = username+"@"+domain+":"+remote
-			rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+home+"/.bareshare/"+share+"rsync.log &"
+			rsynclog = home + "/.bareshare/"+share+"rsync.log"
+			rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+rsynclog+" &"
 			# Run rsync of each share
 #			os.system(rsync) 
-			self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+share+"rsync.log"], stdout=subprocess.PIPE)
+			self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE)
 
 		# Processes 
 		lsyncd="lsyncd " + lsyncdconfig + " &"
@@ -227,6 +227,8 @@ class BareShareAppIndicator:
 
 		# If rsync isn't running, just use lsyncd data instead
 		else:
+			self.labelR.hide() # hide Rsync dynamic label
+
 			# Get the last row from log file
 			# Will be changed to use STDOUT from subprocess
 			fileHandle = open ( lsyncdlog,"r" )
