@@ -102,14 +102,14 @@ class BareShareAppIndicator:
 			self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		# Processes 
-		lsyncd="lsyncd " + lsyncdconfig + " &"
+#		lsyncd="lsyncd " + lsyncdconfig + " &"
 		# Start the sync daemon in the background
-		os.system(lsyncd)
-		#lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE)
+		#os.system(lsyncd)
+		lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 		# Keep the labels updated
 		gobject.timeout_add(1000, self.lsyncdOutput, None)
-		gobject.timeout_add(100, self.rsyncOutput, None)
+#		gobject.timeout_add(100, self.rsyncOutput, None)
 
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
@@ -126,11 +126,11 @@ class BareShareAppIndicator:
 		self.label.show()
 		self.menu.append(self.label)
 
-		# Dynamic Rsync label for testing
+		# Dyamic label for fileinfo
 		self.labelR = gtk.MenuItem()
-		self.labelR.set_label("Wait")
+		self.labelR.set_label("Fileinfo here")
 		self.labelR.set_sensitive(False)
-		self.labelR.show()
+		self.labelR.hide()
 		self.menu.append(self.labelR)
 
 		# Separator
@@ -185,23 +185,22 @@ class BareShareAppIndicator:
 	def quit(self, widget, data=None):
 		os.system("killall -9 lsyncd")
 		os.system("killall -9 rsync")
-#		self.rsyncRun.kill()
-
 		gtk.main_quit()
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
 		# get pid
-		pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+		pidL = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		# Check if lsyncd is running
-		if pid: #if it isnt
+		if pidL: #if it isnt
 			print "Debug: Starting lsyncd and rsync again"
 			# Resume sync
-#			os.system("kill -CONT %i"%pid) # DOesnt work yet
-			# Start from the beginning
-			os.system(lsyncd)
-			os.system(rsync)
+			pid = str(pidL)
+			os.system("kill -CONT "+pid)
+#			if pidR:
+#				pidr = str(pidR)
+#				os.system("kill -CONT "+pidr)
 			self.ppus.set_label("Pause Sync")
 			self.label.set_label(startingM)
 			self.ind.set_icon(icon) # Set to active icon
@@ -209,10 +208,12 @@ class BareShareAppIndicator:
 		else: # if it is
 			print "Debug: Killing lsyncd and rsync"
 			# Pause sync
-#			os.system("kill -STOP %i"%pid) # Don't work yet
-			# Kill it instead.
-			os.system("killall -9 lsyncd")
-			os.system("killall -9 rsync")
+			pid = str(pidL)
+			os.system("kill -STOP "+pid)
+			# Also stop rsync, if running
+#			if not pidR:
+#				pidr = str(pidR)
+#				os.system("kill -STOP "+pidr)
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 			self.ind.set_icon(picon) # Passive icon
@@ -237,24 +238,18 @@ class BareShareAppIndicator:
 
 		# If rsync isn't running, just use lsyncd data instead
 		else:
-			self.labelR.hide() # hide Rsync dynamic label
-
-			# Get the last row from log file
-			# Will be changed to use STDOUT from subprocess
-			fileHandle = open ( lsyncdlog,"r" )
-			lineList = fileHandle.readlines()
-			fileHandle.close()
-			lastline = lineList[-1]
+			# Get output from lsyncd subprocess
+			self.line = self.lsyncdRun.stdout.readline()
+			lsyncdM = self.line.rstrip()
+			self.labelR.set_label(lsyncdM)
 
 			pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 
 			# Then be sure that the row contains the needed info
-			if "value" in lastline:
+			if "value" in self.line:
 				print "True"
-				# Then strip it down to just the data we need.
-				info = lastline[-2:]
-				print info
-				self.label.set_label(info)
+				print "DEBUG: "+lsyncdM
+				self.label.set_label(lsyncdM)
 
 			if pid: #if it isnt running
 				self.label.set_label("Paused")
@@ -262,19 +257,19 @@ class BareShareAppIndicator:
 
 			else:
 				# Standby message
-				if "building" in lastline:
+				if "building" in self.line:
 					self.label.set_label(buildM)
 					self.ind.set_icon(icon) # default icon
-				if "recursive startup rsync" in lastline:
+				if "recursive startup rsync" in self.line:
 					self.label.set_label(buildM)
 					self.ind.set_icon(icon) # default icon
-				if "Finished" in lastline:
+				if "Finished" in self.line:
 					self.label.set_label(finishedM)
 					self.ind.set_icon(icon) # default icon
-				if "Rsyncing list" in lastline:
+				if "Rsyncing list" in self.line:
 					self.label.set_label(syncingM)
 					self.ind.set_icon(sicon) # sync icon
-				if not "Normal:" in lastline:
+				if not "Normal:" in self.line:
 					self.label.set_label(syncingM)
 					self.ind.set_icon(sicon) # sync icon
 
