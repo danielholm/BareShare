@@ -82,9 +82,10 @@ class BareShareAppIndicator:
 		upload = parser.get('profile', 'upload')
 		shares = parser.get('profile', 'shares')
 		# Count the shares and divide transfer speed with the shares count
-		number = (shares.count(' ')+1)
-		speed = int(upload)/int(number)
-		upload = str(speed)
+		if upload is not "0": # Should not be run if the transfer speed is set to zero
+			number = (shares.count(' ')+1)
+			speed = int(upload)/int(number)
+			upload = str(speed)
 		# For each section of shares in conf, get data from its own section
 		for share in shares.split(', '):
 			username = parser.get(share, 'username')
