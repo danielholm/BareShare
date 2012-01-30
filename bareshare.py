@@ -28,6 +28,7 @@ import pynotify
 import os
 import sys
 import subprocess
+import threading
 import csv
 from ConfigParser import SafeConfigParser
 
@@ -86,20 +87,30 @@ class BareShareAppIndicator:
 			number = (shares.count(' ')+1)
 			speed = int(upload)/int(number)
 			upload = str(speed)
+
 		# For each section of shares in conf, get data from its own section
-		for share in shares.split(', '):
-			username = parser.get(share, 'username')
-			sharename = parser.get(share, 'name')
-			local = parser.get(share, 'local')
-			remote = parser.get(share, 'remote')
-			domain = parser.get(share, 'domain')
-			remotedir = username+"@"+domain+":"+remote
-			rsynclog = home + "/.bareshare/"+share+"rsync.log"
-			os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # MOve and remove old log
-			rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+rsynclog+" &"
-			# Run rsync of each share
-#			os.system(rsync) 
-			self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		def worker():
+			for share in shares.split(', '):
+				username = parser.get(share, 'username')
+				sharename = parser.get(share, 'name')
+				local = parser.get(share, 'local')
+				remote = parser.get(share, 'remote')
+				domain = parser.get(share, 'domain')
+				remotedir = username+"@"+domain+":"+remote
+				rsynclog = home + "/.bareshare/"+share+"rsync.log"
+				os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # MOve and remove old log
+				rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+rsynclog+" &"
+				# Run rsync of each share
+	#			os.system(rsync) 
+				self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+				self.rsyncRun.communicate()
+
+				self.line = self.rsyncRun.stdout.readline()
+				rsyncM = self.line.rstrip()
+				print "DEBUG: "+rsyncM
+
+		t = threading.Thread(target = worker)
+		t.start()
 
 		# Processes 
 #		lsyncd="lsyncd " + lsyncdconfig + " &"
