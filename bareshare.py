@@ -103,20 +103,27 @@ class BareShareAppIndicator:
 				# Run rsync of each share
 	#			os.system(rsync) 
 				self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-				self.rsyncRun.communicate()
 
 				self.line = self.rsyncRun.stdout.readline()
 				rsyncM = self.line.rstrip()
 				print "DEBUG: "+rsyncM
 
-		t = threading.Thread(target = worker)
-		t.start()
+				self.rsyncRun.communicate()
+				self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
+#				print "DEBUG: "+self.outData
+				print self.rsyncRun.communicate()
 
-		# Processes 
-#		lsyncd="lsyncd " + lsyncdconfig + " &"
+		self.t = threading.Thread(target = worker)
+		self.t.start()
+#		self.t.join()
+
 		# Start the sync daemon in the background
-		#os.system(lsyncd)
-		lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		print "DEBUG: Starting lsyncd."
+		self.lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		# Print the debugging
+#		self.lineL = self.lsyncdRun.stdout.readline()
+#		lsyncdM = self.lineL.rstrip()
+#		print "DEBUG: "+lsyncdM
 
 		# Keep the labels updated
 		gobject.timeout_add(1000, self.lsyncdOutput, None)
@@ -194,8 +201,6 @@ class BareShareAppIndicator:
 
 	# Close the indicator and kill the sync daemon
 	def quit(self, widget, data=None):
-		os.system("killall -9 lsyncd")
-		os.system("killall -9 rsync")
 		gtk.main_quit()
 
 	# Pause or unpause function
@@ -231,7 +236,6 @@ class BareShareAppIndicator:
 
 	# Updates the label about rsync transer data
 	def rsyncOutput(self, widget):
-#		self.linerr = self.rsyncRun.stderr.readline()
 		self.line = self.rsyncRun.stdout.readline()
 		rsyncM = self.line.rstrip()
 		self.labelR.set_label(rsyncM)
