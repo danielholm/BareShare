@@ -96,7 +96,7 @@ class BareShareAppIndicator:
 				domain = parser.get(share, 'domain')
 				remotedir = username+"@"+domain+":"+remote
 				rsynclog = home + "/.bareshare/"+share+"rsync.log"
-				os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # MOve and remove old log
+				os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # Move and remove old log
 				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
 
 				# Run rsync of each share - but check for which direction
@@ -110,17 +110,13 @@ class BareShareAppIndicator:
 					# The status message
 					self.statusM = uploadM
 
+				# Print whats happening
 				self.line = self.rsyncRun.stdout.readline()
 				rsyncM = self.line.rstrip()
 				print "DEBUG: "+rsyncM
 
-				self.rsyncRun.communicate()
-#				self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
-#				print "DEBUG: "+self.outData
-
 		self.t = threading.Thread(target = worker)
 		self.t.start()
-#		self.t.join()
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
@@ -219,9 +215,7 @@ class BareShareAppIndicator:
 			# Resume sync
 			pid = str(pidL)
 			os.system("kill -CONT "+pid)
-#			if pidR:
-#				pidr = str(pidR)
-#				os.system("kill -CONT "+pidr)
+			# Should also be looking for rsync
 			self.ppus.set_label("Pause Sync")
 			self.label.set_label(startingM)
 			self.ind.set_icon(icon) # Set to active icon
@@ -231,19 +225,12 @@ class BareShareAppIndicator:
 			# Pause sync
 			pid = str(pidL)
 			os.system("kill -STOP "+pid)
-			# Also stop rsync, if running
-#			if not pidR:
-#				pidr = str(pidR)
-#				os.system("kill -STOP "+pidr)
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 			self.ind.set_icon(picon) # Passive icon
 
 	# Updates the label about rsync transer data
 	def rsyncOutput(self, widget):
-#		self.line = self.rsyncRun.stdout.readline()
-#		rsyncM = self.line.rstrip()
-#		self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
 		self.labelR.set_label(rsyncM)
 		print "DEBUG: "+rsyncM
 
@@ -283,20 +270,24 @@ class BareShareAppIndicator:
 				if "building" in self.line:
 					self.label.set_label(buildM)
 					self.ind.set_icon(icon) # default icon
+
 				if "recursive startup rsync" in self.line:
 					self.label.set_label(buildM)
 					self.ind.set_icon(icon) # default icon
+
 				if "Finished" in self.line:
 					self.label.set_label(finishedM)
 					self.ind.set_icon(icon) # default icon
+
 				if "Rsyncing list" in self.line:
 					self.label.set_label(syncingM)
 					self.ind.set_icon(sicon) # sync icon
+
 				if not "Normal:" in self.line:
 					self.label.set_label(syncingM)
 					self.ind.set_icon(sicon) # sync icon
 
-		return True #Have to return True for it to keep on
+		return True # Keep it go on
 			
 	# About
 	def show_about(self, widget, data):
@@ -310,7 +301,7 @@ class BareShareAppIndicator:
 		dialog.set_logo(gtk.gdk.pixbuf_new_from_file("/home/daniel/Dokument/BareShare/icons/bareshare-light.png"))
 
 		# Set the application version
-		dialog.set_version('0.1')
+		dialog.set_version('0.1.5')
 
 		# Set a list of authors.
 		dialog.set_authors(['Daniel Holm - Dev', 'Icons by Gentleface - http://www.gentleface.com/'])
@@ -344,7 +335,7 @@ class BareShareAppIndicator:
 		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
 		    gtk.BUTTONS_CLOSE, "Not yet implented")
 
-		first.set_title("First run guide - Add share")
+		first.set_title("BareShare - Add new share")
 		first.set_size_request(250, 150)
 		first.set_position(gtk.WIN_POS_CENTER)
 		first.run()
@@ -357,7 +348,7 @@ class BareShareAppIndicator:
 		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
 		    gtk.BUTTONS_CLOSE, "Not yet implented")
 
-		pref.set_title("Preferences")
+		pref.set_title("BareShare - Preferences")
 		pref.set_size_request(500, 300)
 		pref.set_position(gtk.WIN_POS_CENTER)
 		pref.run()
