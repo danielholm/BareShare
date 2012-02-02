@@ -82,6 +82,7 @@ class BareShareAppIndicator:
 		download = parser.get('profile', 'download')
 		upload = parser.get('profile', 'upload')
 		shares = parser.get('profile', 'shares')
+		print "DEBUG: Shares: "+shares
 		# Count the shares and divide transfer speed with the shares count
 		if upload is not "0": # Should not be run if the transfer speed is set to zero
 			number = (shares.count(' ')+1)
@@ -93,25 +94,29 @@ class BareShareAppIndicator:
 			for share in shares.split(', '):
 				username = parser.get(share, 'username')
 				sharename = parser.get(share, 'name')
+				way = parser.get(share, 'way')
 				local = parser.get(share, 'local')
 				remote = parser.get(share, 'remote')
 				domain = parser.get(share, 'domain')
 				remotedir = username+"@"+domain+":"+remote
 				rsynclog = home + "/.bareshare/"+share+"rsync.log"
 				os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # MOve and remove old log
-				rsync="rsync --bwlimit="+upload+" --stats --progress -azvv -e ssh "+local+" "+username+"@"+domain+":"+remote+" --log-file="+rsynclog+" &"
-				# Run rsync of each share
-	#			os.system(rsync) 
-				self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
+
+				# Run rsync of each share - but check for which direction
+				if way == "download":
+					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+download,"--stats","--progress","-azvv","-e","ssh",remotedir,local,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+				if way == "upload":
+ 					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 				self.line = self.rsyncRun.stdout.readline()
 				rsyncM = self.line.rstrip()
 				print "DEBUG: "+rsyncM
 
 				self.rsyncRun.communicate()
-				self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
+#				self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
 #				print "DEBUG: "+self.outData
-				print self.rsyncRun.communicate()
 
 		self.t = threading.Thread(target = worker)
 		self.t.start()
@@ -236,8 +241,9 @@ class BareShareAppIndicator:
 
 	# Updates the label about rsync transer data
 	def rsyncOutput(self, widget):
-		self.line = self.rsyncRun.stdout.readline()
-		rsyncM = self.line.rstrip()
+#		self.line = self.rsyncRun.stdout.readline()
+#		rsyncM = self.line.rstrip()
+#		self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
 		self.labelR.set_label(rsyncM)
 		print "DEBUG: "+rsyncM
 
@@ -259,6 +265,8 @@ class BareShareAppIndicator:
 			self.labelR.set_label(lsyncdM)
 
 			pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
+
+			print "DEBUG: "+self.line
 
 			# Then be sure that the row contains the needed info
 			if "value" in self.line:
