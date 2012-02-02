@@ -53,6 +53,7 @@ syncingM = "Syncing..."
 finishedM = "All files are up to date."
 buildM = "Building file list..."
 uploadM = "Uploading..."
+downloadM = "Downloading..."
 
 # Creates the class for the application
 class BareShareAppIndicator:
@@ -83,11 +84,6 @@ class BareShareAppIndicator:
 		upload = parser.get('profile', 'upload')
 		shares = parser.get('profile', 'shares')
 		print "DEBUG: Shares: "+shares
-		# Count the shares and divide transfer speed with the shares count
-		if upload is not "0": # Should not be run if the transfer speed is set to zero
-			number = (shares.count(' ')+1)
-			speed = int(upload)/int(number)
-			upload = str(speed)
 
 		# For each section of shares in conf, get data from its own section
 		def worker():
