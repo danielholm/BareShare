@@ -116,6 +116,7 @@ class BareShareAppIndicator:
 				print "DEBUG: "+rsyncM
 
 		self.t = threading.Thread(target = worker)
+		self.t.daemon = True
 		self.t.start()
 
 		# Start the sync daemon in the background

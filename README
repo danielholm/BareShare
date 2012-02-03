@@ -23,7 +23,9 @@ It basically runs lsyncd for you and is being handled by the appindicator.
 
 Comming up: 
 0.2
-* First run guide that acually helps you get your stuff up (client only - you'll have to set up your server by yourself)
-* Notifications (libnotify)
-* Bandwith limit (rsync built-in --bwlimit=)
-* Better rsync support (file scan for non uploaded files initally)
+* First run guide that acually helps you get your stuff up (client only - you'll have to set up your server by yourself).
+* Notifications (libnotify),
+* Bandwith limit (rsync built-in --bwlimit=).
+* Better rsync support (file scan for non uploaded files initally).
+* Initial download of files at startup too.
+* Working conf file.
