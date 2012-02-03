@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # BareShare
-# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120116
+# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120203
 #
 # This program is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU Lesser General Public License version 3, as published by the 
@@ -38,8 +38,7 @@ configdir = home + "/.bareshare"
 configfile = home + "/.bareshare/bareshare.conf"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
-
-os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
+baresharelog = home + "/.bareshare/bareshare.log"
 
 # Some other variables
 icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
@@ -69,6 +68,10 @@ class BareShareAppIndicator:
 		open(configfile,'w').close()
 		# Start the "first run" dialog comes in 0.2
 		# self.first_run()
+
+	# Some log file stuff
+	os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
+	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
 
 	# Get actions from menu and print 'em (debug)
 	def menuitem_response(w, buf):
@@ -114,6 +117,7 @@ class BareShareAppIndicator:
 				self.line = self.rsyncRun.stdout.readline()
 				rsyncM = self.line.rstrip()
 				print "DEBUG: "+rsyncM
+				print "DEBUG: Done, next!"
 
 		self.t = threading.Thread(target = worker)
 		self.t.daemon = True
