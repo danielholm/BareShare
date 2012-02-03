@@ -71,7 +71,7 @@ class BareShareAppIndicator:
 
 	# Some log file stuff
 	os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
-	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
+#	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
 
 	# Get actions from menu and print 'em (debug)
 	def menuitem_response(w, buf):
@@ -122,6 +122,7 @@ class BareShareAppIndicator:
 		self.t = threading.Thread(target = worker)
 		self.t.daemon = True
 		self.t.start()
+		self.t.join()
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
@@ -138,7 +139,7 @@ class BareShareAppIndicator:
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
-		self.ind.set_icon(icon) # THis should change on pause
+		self.ind.set_icon(icon) 
 
 		# Create a menu
 		self.menu = gtk.Menu()
@@ -211,25 +212,15 @@ class BareShareAppIndicator:
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
-		# get pid
-		pidL = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
-		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		# Check if lsyncd is running
 		if pidL: #if it isnt
-			print "Debug: Starting lsyncd and rsync again"
 			# Resume sync
-			pid = str(pidL)
-			os.system("kill -CONT "+pid)
-			# Should also be looking for rsync
 			self.ppus.set_label("Pause Sync")
 			self.label.set_label(startingM)
 			self.ind.set_icon(icon) # Set to active icon
 
 		else: # if it is
-			print "Debug: Killing lsyncd and rsync"
 			# Pause sync
-			pid = str(pidL)
-			os.system("kill -STOP "+pid)
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 			self.ind.set_icon(picon) # Passive icon
@@ -243,54 +234,12 @@ class BareShareAppIndicator:
 
 	# Updates the label about lsyncd transer data
 	def lsyncdOutput(self, widget):
-		# check if rsync' running and if it is, use it first
-		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
-		if not pidR:
-			self.label.set_label(self.statusM)
-			self.ind.set_icon(uicon) # uploading icon
+		# Get output from lsyncd subprocess
+#		self.line = self.lsyncdRun.stdout.readline()
+#		lsyncdM = self.line.rstrip()
+#		self.labelR.set_label(lsyncdM)
 
-		# If rsync isn't running, just use lsyncd data instead
-		else:
-			# Get output from lsyncd subprocess
-			self.line = self.lsyncdRun.stdout.readline()
-			lsyncdM = self.line.rstrip()
-			self.labelR.set_label(lsyncdM)
-
-			pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
-
-			print "DEBUG: "+self.line
-
-			# Then be sure that the row contains the needed info
-			if "value" in self.line:
-				print "True"
-				print "DEBUG: "+lsyncdM
-				self.label.set_label(lsyncdM)
-
-			if pid: #if it isnt running
-				self.label.set_label("Paused")
-				self.ind.set_icon(picon) # Passive icon
-
-			else:
-				# Standby message
-				if "building" in self.line:
-					self.label.set_label(buildM)
-					self.ind.set_icon(icon) # default icon
-
-				if "recursive startup rsync" in self.line:
-					self.label.set_label(buildM)
-					self.ind.set_icon(icon) # default icon
-
-				if "Finished" in self.line:
-					self.label.set_label(finishedM)
-					self.ind.set_icon(icon) # default icon
-
-				if "Rsyncing list" in self.line:
-					self.label.set_label(syncingM)
-					self.ind.set_icon(sicon) # sync icon
-
-				if not "Normal:" in self.line:
-					self.label.set_label(syncingM)
-					self.ind.set_icon(sicon) # sync icon
+#		print "DEBUG: "+lsyncdM
 
 		return True # Keep it go on
 			
