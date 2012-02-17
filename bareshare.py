@@ -99,7 +99,10 @@ class BareShareAppIndicator:
 				domain = parser.get(share, 'domain')
 				remotedir = username+"@"+domain+":"+remote
 				rsynclog = home + "/.bareshare/"+share+"rsync.log"
-				os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # Move and remove old log
+				# Backup old logs if they exist
+				if os.path.exists(rsynclog):
+					os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # Move and remove old log
+
 				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
 
 				# Run rsync of each share - but check for which direction
@@ -122,7 +125,7 @@ class BareShareAppIndicator:
 		self.t = threading.Thread(target = worker)
 		self.t.daemon = True
 		self.t.start()
-		self.t.join()
+#		self.t.join()
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
