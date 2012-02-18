@@ -125,7 +125,7 @@ class BareShareAppIndicator:
 		self.t = threading.Thread(target = worker)
 		self.t.daemon = True
 		self.t.start()
-		self.t.join()
+#		self.t.join()
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."

@@ -356,6 +356,7 @@ class BareShareAppIndicator:
 
 		# Set up the share settings template variable
 		tpl = "\n["+name+"]\nname = "+name+"\nusername = "+username+"\nway = download\nlocal = "+local+"/\nremote = "+remote+"/\ndomain = "+adress+"\n"
+		ltpl = '\nsync{default.rsyncssh, source="'+local+'/", host="'+adress+'", targetdir="'+remote+'", rsyncOpts="-ltus", "-azvv"}\n'
 
 		# Parse the config file to get the previous shares
 		parser = SafeConfigParser()
@@ -375,6 +376,10 @@ class BareShareAppIndicator:
 		# Add the new share to the config file
 		with open(configfile, "a") as f:
 			f.write(tpl)
+
+		# Add a new row to the lsyncd config too
+		with open(lsyncdconfig, "a") as f:
+			f.write(ltpl)
 
 
 	# Preferences window
