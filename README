@@ -30,3 +30,8 @@ Comming up:
 * Initial download of files at startup too.
 * Working conf file. Check!
 * Preferences window with something in it.
+
+0.3
+* Share to * - possible to share some files easily using different services.
+* Nautilus plugin.
+* New lsyncd settings which will make multiple clients safer.
