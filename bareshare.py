@@ -32,6 +32,8 @@ import threading
 import csv
 from ConfigParser import SafeConfigParser
 
+version = "0.1.8"
+
 # Settingsdir and -file.
 home = os.getenv('HOME')
 configdir = home + "/.bareshare"
@@ -39,12 +41,15 @@ configfile = home + "/.bareshare/bareshare.conf"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
 baresharelog = home + "/.bareshare/bareshare.log"
+path = os.path.realpath(__file__)
+path = path.strip('bareshare.py')
 
 # Some other variables
-icon = "/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark.png" # Fix 
-picon = "/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-passive.png" # Fix 
-uicon ="/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-upload.png" # Fix 
-sicon ="/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-sync.png" # Fix 
+icon = path+"icons/bareshare-dark.png"
+picon = path+"icons/bareshare-dark-passive.png"
+uicon = path+"icons/bareshare-dark-upload.png"
+sicon = path+"icons/bareshare-dark-sync.png"
+lighticon = path+"icons/bareshare-light.png"
 
 # Messages
 startingM = "Starting..."
@@ -67,7 +72,7 @@ class BareShareAppIndicator:
 		print "Configfile for lsyncd did not exist. Creating..."
 		open(configfile,'w').close()
 		# Start the "first run" dialog comes in 0.2
-		# self.first_run()
+		self.first_run()
 
 	# Some log file stuff
 	os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
@@ -121,6 +126,7 @@ class BareShareAppIndicator:
 				rsyncM = self.line.rstrip()
 				print "DEBUG: "+rsyncM
 				print "DEBUG: Done, next!"
+				os.system('notify-send "Sync finished" "'+sharename+' is finished syncing" -i '+icon)
 
 		self.t = threading.Thread(target = worker)
 		self.t.daemon = True
@@ -256,10 +262,10 @@ class BareShareAppIndicator:
 		dialog.set_name('BareShare')
 
 		# Add a application icon to the dialog
-		dialog.set_logo(gtk.gdk.pixbuf_new_from_file("/home/daniel/Dokument/BareShare/icons/bareshare-light.png"))
+		dialog.set_logo(gtk.gdk.pixbuf_new_from_file(lighticon))
 
 		# Set the application version
-		dialog.set_version('0.1.5')
+		dialog.set_version(version)
 
 		# Set a list of authors.
 		dialog.set_authors(['Daniel Holm - Dev', 'Icons by Gentleface - http://www.gentleface.com/'])
@@ -380,6 +386,9 @@ class BareShareAppIndicator:
 		# Add a new row to the lsyncd config too
 		with open(lsyncdconfig, "a") as f:
 			f.write(ltpl)
+
+		# Show notification
+		os.system('notify-send "Added share" "You have to restart BareShare" -i '+icon)
 
 
 	# Preferences window
