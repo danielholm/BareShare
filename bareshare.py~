@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # BareShare
-# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120116
+# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120203
 #
 # This program is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU Lesser General Public License version 3, as published by the 
@@ -38,14 +38,13 @@ configdir = home + "/.bareshare"
 configfile = home + "/.bareshare/bareshare.conf"
 lsyncdconfig = home + "/.bareshare/lsyncd.conf"
 lsyncdlog = home + "/.bareshare/lsyncd.log"
-
-os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
+baresharelog = home + "/.bareshare/bareshare.log"
 
 # Some other variables
-icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
-picon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark-passive.png" # Fix 
-uicon ="/home/daniel/Dokument/BareShare/icons/bareshare-dark-upload.png" # Fix 
-sicon ="/home/daniel/Dokument/BareShare/icons/bareshare-dark-sync.png" # Fix 
+icon = "/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark.png" # Fix 
+picon = "/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-passive.png" # Fix 
+uicon ="/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-upload.png" # Fix 
+sicon ="/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-sync.png" # Fix 
 
 # Messages
 startingM = "Starting..."
@@ -70,6 +69,10 @@ class BareShareAppIndicator:
 		# Start the "first run" dialog comes in 0.2
 		# self.first_run()
 
+	# Some log file stuff
+	os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
+#	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
+
 	# Get actions from menu and print 'em (debug)
 	def menuitem_response(w, buf):
 		print buf
@@ -86,40 +89,42 @@ class BareShareAppIndicator:
 		print "DEBUG: Shares: "+shares
 
 		# For each section of shares in conf, get data from its own section
-		def worker():
-			for share in shares.split(', '):
-				username = parser.get(share, 'username')
-				sharename = parser.get(share, 'name')
-				way = parser.get(share, 'way')
-				local = parser.get(share, 'local')
-				remote = parser.get(share, 'remote')
-				domain = parser.get(share, 'domain')
-				remotedir = username+"@"+domain+":"+remote
-				rsynclog = home + "/.bareshare/"+share+"rsync.log"
-				os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # MOve and remove old log
-				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
-
-				# Run rsync of each share - but check for which direction
-				if way == "download":
-					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+download,"--stats","--progress","-azvv","-e","ssh",remotedir,local,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-					# The status message
-					self.statusM = downloadM
-
-				if way == "upload":
- 					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-					# The status message
-					self.statusM = uploadM
-
-				self.line = self.rsyncRun.stdout.readline()
-				rsyncM = self.line.rstrip()
-				print "DEBUG: "+rsyncM
-
-				self.rsyncRun.communicate()
-#				self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
-#				print "DEBUG: "+self.outData
-
-		self.t = threading.Thread(target = worker)
-		self.t.start()
+#		def worker():
+#			for share in shares.split(', '):
+#				username = parser.get(share, 'username')
+#				sharename = parser.get(share, 'name')
+#				way = parser.get(share, 'way')
+#				local = parser.get(share, 'local')
+#				remote = parser.get(share, 'remote')
+#				domain = parser.get(share, 'domain')
+#				remotedir = username+"@"+domain+":"+remote
+#				rsynclog = home + "/.bareshare/"+share+"rsync.log"
+#				# Backup old logs if they exist
+#				if os.path.exists(rsynclog):
+#					os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # Move and remove old log
+#
+#				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
+#
+#				# Run rsync of each share - but check for which direction
+#				if way == "download":
+#					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+download,"--stats","--progress","-azvv","-e","ssh",remotedir,local,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#					# The status message
+#					self.statusM = downloadM
+#
+#				if way == "upload":
+# 					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#					# The status message
+#					self.statusM = uploadM
+#
+#				# Print whats happening
+#				self.line = self.rsyncRun.stdout.readline()
+#				rsyncM = self.line.rstrip()
+#				print "DEBUG: "+rsyncM
+#				print "DEBUG: Done, next!"
+#
+#		self.t = threading.Thread(target = worker)
+#		self.t.daemon = True
+#		self.t.start()
 #		self.t.join()
 
 		# Start the sync daemon in the background
@@ -137,7 +142,7 @@ class BareShareAppIndicator:
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
 		self.ind.set_status (appindicator.STATUS_ACTIVE)
-		self.ind.set_icon(icon) # THis should change on pause
+		self.ind.set_icon(icon) 
 
 		# Create a menu
 		self.menu = gtk.Menu()
@@ -207,43 +212,25 @@ class BareShareAppIndicator:
 	# Close the indicator and kill the sync daemon
 	def quit(self, widget, data=None):
 		gtk.main_quit()
+		os.system("killall -9 lsyncd rsync")
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
-		# get pid
-		pidL = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
-		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
 		# Check if lsyncd is running
 		if pidL: #if it isnt
-			print "Debug: Starting lsyncd and rsync again"
 			# Resume sync
-			pid = str(pidL)
-			os.system("kill -CONT "+pid)
-#			if pidR:
-#				pidr = str(pidR)
-#				os.system("kill -CONT "+pidr)
 			self.ppus.set_label("Pause Sync")
 			self.label.set_label(startingM)
 			self.ind.set_icon(icon) # Set to active icon
 
 		else: # if it is
-			print "Debug: Killing lsyncd and rsync"
 			# Pause sync
-			pid = str(pidL)
-			os.system("kill -STOP "+pid)
-			# Also stop rsync, if running
-#			if not pidR:
-#				pidr = str(pidR)
-#				os.system("kill -STOP "+pidr)
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 			self.ind.set_icon(picon) # Passive icon
 
 	# Updates the label about rsync transer data
 	def rsyncOutput(self, widget):
-#		self.line = self.rsyncRun.stdout.readline()
-#		rsyncM = self.line.rstrip()
-#		self.outData, self.errData = self.rsyncRun.communicate()  # this will return the data read from stdout, and stderr
 		self.labelR.set_label(rsyncM)
 		print "DEBUG: "+rsyncM
 
@@ -251,52 +238,14 @@ class BareShareAppIndicator:
 
 	# Updates the label about lsyncd transer data
 	def lsyncdOutput(self, widget):
-		# check if rsync' running and if it is, use it first
-		pidR = subprocess.call(["pgrep", "rsync"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
-		if not pidR:
-			self.label.set_label(self.statusM)
-			self.ind.set_icon(uicon) # uploading icon
+		# Get output from lsyncd subprocess
+#		self.line = self.lsyncdRun.stdout.readline()
+#		lsyncdM = self.line.rstrip()
+#		self.labelR.set_label(lsyncdM)
 
-		# If rsync isn't running, just use lsyncd data instead
-		else:
-			# Get output from lsyncd subprocess
-			self.line = self.lsyncdRun.stdout.readline()
-			lsyncdM = self.line.rstrip()
-			self.labelR.set_label(lsyncdM)
+#		print "DEBUG: "+lsyncdM
 
-			pid = subprocess.call(["pgrep", "lsyncd"], stdout=open(os.devnull, "w"), stderr=subprocess.STDOUT)
-
-			print "DEBUG: "+self.line
-
-			# Then be sure that the row contains the needed info
-			if "value" in self.line:
-				print "True"
-				print "DEBUG: "+lsyncdM
-				self.label.set_label(lsyncdM)
-
-			if pid: #if it isnt running
-				self.label.set_label("Paused")
-				self.ind.set_icon(picon) # Passive icon
-
-			else:
-				# Standby message
-				if "building" in self.line:
-					self.label.set_label(buildM)
-					self.ind.set_icon(icon) # default icon
-				if "recursive startup rsync" in self.line:
-					self.label.set_label(buildM)
-					self.ind.set_icon(icon) # default icon
-				if "Finished" in self.line:
-					self.label.set_label(finishedM)
-					self.ind.set_icon(icon) # default icon
-				if "Rsyncing list" in self.line:
-					self.label.set_label(syncingM)
-					self.ind.set_icon(sicon) # sync icon
-				if not "Normal:" in self.line:
-					self.label.set_label(syncingM)
-					self.ind.set_icon(sicon) # sync icon
-
-		return True #Have to return True for it to keep on
+		return True # Keep it go on
 			
 	# About
 	def show_about(self, widget, data):
@@ -310,7 +259,7 @@ class BareShareAppIndicator:
 		dialog.set_logo(gtk.gdk.pixbuf_new_from_file("/home/daniel/Dokument/BareShare/icons/bareshare-light.png"))
 
 		# Set the application version
-		dialog.set_version('0.1')
+		dialog.set_version('0.1.5')
 
 		# Set a list of authors.
 		dialog.set_authors(['Daniel Holm - Dev', 'Icons by Gentleface - http://www.gentleface.com/'])
@@ -340,16 +289,59 @@ class BareShareAppIndicator:
 
 	# First run
 	def first_run(self, widget, data):
-		first = gtk.MessageDialog(None, 
-		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
-		    gtk.BUTTONS_CLOSE, "Not yet implented")
+		dialog = gtk.MessageDialog(
+			None,
+			gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+			gtk.MESSAGE_QUESTION,
+			gtk.BUTTONS_OK,
+			None)
 
-		first.set_title("First run guide - Add share")
-		first.set_size_request(250, 150)
-		first.set_position(gtk.WIN_POS_CENTER)
-		first.run()
-		first.destroy()
+		# Set some window settings
+		dialog.set_title("BareShare - Add new share")
+#		dialog.set_size_request(400, 300)
+		dialog.set_position(gtk.WIN_POS_CENTER)
+		dialog.set_markup('Please enter the needed information to connect.')
 
+		hbox = gtk.VBox(False, 2)
+		vbox = gtk.HBox(True, 2)
+
+		# Server adress
+		adress = gtk.Entry()
+		adress.set_text("Server adress (domain)")
+		hbox.add(adress)
+		# Server username
+		username = gtk.Entry()
+		username.set_text("Username on server")
+		hbox.add(username)
+		# local directory
+		local = gtk.Entry()
+		local.set_text("Directory on machine")
+		hbox.add(local)
+		# remote directory
+		remote = gtk.Entry()
+		remote.set_text("Directory on server")
+		hbox.add(remote)
+
+		dialog.vbox.pack_end(hbox, True, True, 0)
+
+		dialog.show_all()
+		dialog.run()
+
+		# Get the text from entry fields
+		get_adress = adress.get_text()
+		get_username = username.get_text()
+		get_local = local.get_text()
+		get_remote = remote.get_text()
+
+		# When clicked ok, destroy the window and send the data
+		dialog.connect("destroy", self.addShare, get_adress, get_username, get_local, get_remote)
+		dialog.destroy() 
+
+	def addShare(self, widget, get_adress, get_username, get_local, get_remote):
+		print "Domain: "+ get_adress
+		print "Username: "+ get_username
+		print "Local dir: "+ get_local
+		print "Remote dir: "+ get_remote
 
 	# Preferences window
 	def prefD(self, widget, data):
@@ -357,7 +349,7 @@ class BareShareAppIndicator:
 		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
 		    gtk.BUTTONS_CLOSE, "Not yet implented")
 
-		pref.set_title("Preferences")
+		pref.set_title("BareShare - Preferences")
 		pref.set_size_request(500, 300)
 		pref.set_position(gtk.WIN_POS_CENTER)
 		pref.run()

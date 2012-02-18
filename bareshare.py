@@ -41,10 +41,10 @@ lsyncdlog = home + "/.bareshare/lsyncd.log"
 baresharelog = home + "/.bareshare/bareshare.log"
 
 # Some other variables
-icon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark.png" # Fix 
-picon = "/home/daniel/Dokument/BareShare/icons/bareshare-dark-passive.png" # Fix 
-uicon ="/home/daniel/Dokument/BareShare/icons/bareshare-dark-upload.png" # Fix 
-sicon ="/home/daniel/Dokument/BareShare/icons/bareshare-dark-sync.png" # Fix 
+icon = "/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark.png" # Fix 
+picon = "/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-passive.png" # Fix 
+uicon ="/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-upload.png" # Fix 
+sicon ="/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark-sync.png" # Fix 
 
 # Messages
 startingM = "Starting..."
@@ -89,42 +89,42 @@ class BareShareAppIndicator:
 		print "DEBUG: Shares: "+shares
 
 		# For each section of shares in conf, get data from its own section
-		def worker():
-			for share in shares.split(', '):
-				username = parser.get(share, 'username')
-				sharename = parser.get(share, 'name')
-				way = parser.get(share, 'way')
-				local = parser.get(share, 'local')
-				remote = parser.get(share, 'remote')
-				domain = parser.get(share, 'domain')
-				remotedir = username+"@"+domain+":"+remote
-				rsynclog = home + "/.bareshare/"+share+"rsync.log"
-				# Backup old logs if they exist
-				if os.path.exists(rsynclog):
-					os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # Move and remove old log
-
-				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
-
-				# Run rsync of each share - but check for which direction
-				if way == "download":
-					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+download,"--stats","--progress","-azvv","-e","ssh",remotedir,local,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-					# The status message
-					self.statusM = downloadM
-
-				if way == "upload":
- 					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-					# The status message
-					self.statusM = uploadM
-
-				# Print whats happening
-				self.line = self.rsyncRun.stdout.readline()
-				rsyncM = self.line.rstrip()
-				print "DEBUG: "+rsyncM
-				print "DEBUG: Done, next!"
-
-		self.t = threading.Thread(target = worker)
-		self.t.daemon = True
-		self.t.start()
+#		def worker():
+#			for share in shares.split(', '):
+#				username = parser.get(share, 'username')
+#				sharename = parser.get(share, 'name')
+#				way = parser.get(share, 'way')
+#				local = parser.get(share, 'local')
+#				remote = parser.get(share, 'remote')
+#				domain = parser.get(share, 'domain')
+#				remotedir = username+"@"+domain+":"+remote
+#				rsynclog = home + "/.bareshare/"+share+"rsync.log"
+#				# Backup old logs if they exist
+#				if os.path.exists(rsynclog):
+#					os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # Move and remove old log
+#
+#				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
+#
+#				# Run rsync of each share - but check for which direction
+#				if way == "download":
+#					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+download,"--stats","--progress","-azvv","-e","ssh",remotedir,local,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#					# The status message
+#					self.statusM = downloadM
+#
+#				if way == "upload":
+# 					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#					# The status message
+#					self.statusM = uploadM
+#
+#				# Print whats happening
+#				self.line = self.rsyncRun.stdout.readline()
+#				rsyncM = self.line.rstrip()
+#				print "DEBUG: "+rsyncM
+#				print "DEBUG: Done, next!"
+#
+#		self.t = threading.Thread(target = worker)
+#		self.t.daemon = True
+#		self.t.start()
 #		self.t.join()
 
 		# Start the sync daemon in the background
@@ -212,6 +212,7 @@ class BareShareAppIndicator:
 	# Close the indicator and kill the sync daemon
 	def quit(self, widget, data=None):
 		gtk.main_quit()
+		os.system("killall -9 lsyncd rsync")
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
@@ -288,16 +289,60 @@ class BareShareAppIndicator:
 
 	# First run
 	def first_run(self, widget, data):
-		first = gtk.MessageDialog(None, 
-		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
-		    gtk.BUTTONS_CLOSE, "Not yet implented")
+		dialog = gtk.MessageDialog(
+			None,
+			gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+			gtk.MESSAGE_QUESTION,
+			gtk.BUTTONS_OK,
+			None)
 
-		first.set_title("BareShare - Add new share")
-		first.set_size_request(250, 150)
-		first.set_position(gtk.WIN_POS_CENTER)
-		first.run()
-		first.destroy()
+		# Set some window settings
+		dialog.set_title("BareShare - Add new share")
+#		dialog.set_size_request(400, 300)
+		dialog.set_position(gtk.WIN_POS_CENTER)
+		dialog.set_markup('Please enter the needed information to connect.')
 
+		hbox = gtk.VBox(False, 2)
+		vbox = gtk.HBox(True, 2)
+
+		# Server adress
+		adress = gtk.Entry()
+		adress.set_text("Server adress (domain)")
+		hbox.add(adress)
+		# Server username
+		username = gtk.Entry()
+		username.set_text("Username on server")
+		hbox.add(username)
+		# local directory
+		local = gtk.Entry()
+		local.set_text("Directory on machine")
+		hbox.add(local)
+		# remote directory
+		remote = gtk.Entry()
+		remote.set_text("Directory on server")
+		hbox.add(remote)
+
+		dialog.vbox.pack_end(hbox, True, True, 0)
+
+		dialog.show_all()
+		dialog.run()
+
+		# Get the text from entry fields
+		get_adress = adress.get_text()
+		get_username = username.get_text()
+		get_local = local.get_text()
+		get_remote = remote.get_text()
+
+		# When clicked ok, destroy the window and send the data
+		dialog.connect("destroy", self.addShare, get_adress, get_username, get_local, get_remote)
+		dialog.destroy() 
+
+	# Collect the data from the add share dialog and modify the config
+	def addShare(self, widget, get_adress, get_username, get_local, get_remote):
+		print "Domain: "+ get_adress
+		print "Username: "+ get_username
+		print "Local dir: "+ get_local
+		print "Remote dir: "+ get_remote
 
 	# Preferences window
 	def prefD(self, widget, data):
