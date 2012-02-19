@@ -68,6 +68,10 @@ class BareShareAppIndicator:
 	if not os.path.exists(configfile):
 		print "Configfile did not exist. Creating..."
 		open(configfile,'w').close()
+		# Add the new share to the config file
+		configtpl = '[profile]\ndownload = 0\nupload = 0\nshares = '
+		with open(configfile, "a") as f:
+			f.write(configtpl)
 	if not os.path.exists(lsyncdconfig):
 		print "Configfile for lsyncd did not exist. Creating..."
 		open(configfile,'w').close()
@@ -376,7 +380,7 @@ class BareShareAppIndicator:
 		os.system("cp "+configfile+" "+configfile+".bak")
 
 		# Set up the share settings template variable
-		tpl = "\n["+name+"]\nname = "+name+"\nusername = "+username+"\nway = download\nlocal = "+local+"/\nremote = "+remote+"/\ndomain = "+adress+"\n"
+		tpl = "\n["+name+"]\nname = "+name+"\nusername = "+username+"\nway = upload\nlocal = "+local+"/\nremote = "+remote+"/\ndomain = "+adress+"\n"
 		ltpl = '\nsync{default.rsyncssh, source="'+local+'/", host="'+adress+'", targetdir="'+remote+'", rsyncOpts="-ltus", "-azvv"}\n'
 
 		# Parse the config file to get the previous shares
