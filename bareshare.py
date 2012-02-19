@@ -295,58 +295,70 @@ class BareShareAppIndicator:
 
 	# First run
 	def first_run(self, widget, data):
-		dialog = gtk.MessageDialog(
-			None,
-			gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-			gtk.MESSAGE_QUESTION,
-			gtk.BUTTONS_OK,
-			None)
+		# Create window dialog
+		self.dialog = gtk.Window()
 
 		# Set some window settings
-		dialog.set_title("BareShare - Add new share")
-#		dialog.set_size_request(400, 300)
-		dialog.set_position(gtk.WIN_POS_CENTER)
-		dialog.set_markup('Please enter the needed information to connect.')
+		self.dialog.set_title("BareShare - Add new share")
+		self.dialog.set_size_request(300, 230)
+		self.dialog.set_position(gtk.WIN_POS_CENTER)
 
-		hbox = gtk.VBox(False, 2)
-		vbox = gtk.HBox(True, 2)
+		# Use fixed positions
+		self.fix = gtk.Fixed()	
+
+		# Add a info message
+		self.message = gtk.Label('Please enter the info for the new share.')
+		self.fix.put(self.message, 10, 10)
 
 		# Share name
-		name = gtk.Entry()
-		name.set_text("Name of share")
-		hbox.add(name)
+		self.name = gtk.Entry()
+		self.name.set_text("Name of share")
+		self.fix.put(self.name, 10, 40)
+
 		# Server adress
-		adress = gtk.Entry()
-		adress.set_text("Server adress (domain)")
-		hbox.add(adress)
+		self.adress = gtk.Entry()
+		self.adress.set_text("Server adress (domain)")
+		self.fix.put(self.adress, 10, 70)
+
 		# Server username
-		username = gtk.Entry()
-		username.set_text("Username on server")
-		hbox.add(username)
+		self.username = gtk.Entry()
+		self.username.set_text("Username on server")
+		self.fix.put(self.username, 10, 100)
+
 		# local directory
-		local = gtk.Entry()
-		local.set_text("Directory on machine")
-		hbox.add(local)
+		self.local = gtk.Entry()
+		self.local.set_text("Directory on machine")
+		self.fix.put(self.local, 10, 130)
+
 		# remote directory
-		remote = gtk.Entry()
-		remote.set_text("Directory on server")
-		hbox.add(remote)
+		self.remote = gtk.Entry()
+		self.remote.set_text("Directory on server")
+		self.fix.put(self.remote, 10, 160)
 
-		dialog.vbox.pack_end(hbox, True, True, 0)
+		# Ok battun to save
+		self.ok = gtk.Button(stock="gtk-ok")
+		self.fix.put(self.ok, 200, 190)
 
-		dialog.show_all()
-		dialog.run()
+		# Close button
+		self.close = gtk.Button(stock="gtk-close")
+		self.fix.put(self.close, 240, 190)
+
+		self.dialog.add(self.fix)
+		self.dialog.show_all()
 
 		# Get the text from entry fields
-		get_name = name.get_text()
-		get_adress = adress.get_text()
-		get_username = username.get_text()
-		get_local = local.get_text()
-		get_remote = remote.get_text()
+		get_name = self.name.get_text()
+		get_adress = self.adress.get_text()
+		get_username = self.username.get_text()
+		get_local = self.local.get_text()
+		get_remote = self.remote.get_text()
 
-		# When clicked ok, destroy the window and send the data
-		dialog.connect("destroy", self.addShare, get_name, get_adress, get_username, get_local, get_remote)
-		dialog.destroy() 
+		# When clicked ok send the data
+		self.ok.connect("clicked", self.addShare, get_name, get_adress, get_username, get_local, get_remote)
+		self.close.connect("clicked", self.closeDialog)
+
+	def closeDialog(self, widget):
+		self.dialog.destroy()
 
 	# Collect the data from the add share dialog and modify the config
 	def addShare(self, widget, name, adress, username, local, remote):
