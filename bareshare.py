@@ -32,7 +32,7 @@ import threading
 import csv
 from ConfigParser import SafeConfigParser
 
-version = "0.2"
+version = "0.2.1"
 
 # Settingsdir and -file.
 home = os.getenv('HOME')
@@ -61,32 +61,31 @@ downloadM = "Downloading..."
 
 # Creates the class for the application
 class BareShareAppIndicator:
-	# Check if config files and dirs exist. If not, create them.
-	if not os.path.exists(configdir):
-		print "Config dir and file did not exist. Creating..."
-		os.makedirs(configdir)
-	if not os.path.exists(configfile):
-		print "Configfile did not exist. Creating..."
-		open(configfile,'w').close()
-		# Add the new share to the config file
-		configtpl = '[profile]\ndownload = 0\nupload = 0\nshares = '
-		with open(configfile, "a") as f:
-			f.write(configtpl)
-	if not os.path.exists(lsyncdconfig):
-		print "Configfile for lsyncd did not exist. Creating..."
-		open(configfile,'w').close()
-		# Start the "first run" dialog comes in 0.2
-		self.first_run()
-
-	# Some log file stuff
-	os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
-#	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
-
 	# Get actions from menu and print 'em (debug)
 	def menuitem_response(w, buf):
 		print buf
 
 	def __init__(self):
+		# Check if config files and dirs exist. If not, create them.
+		if not os.path.exists(configdir):
+			print "Config dir and file did not exist. Creating..."
+			os.makedirs(configdir)
+		if not os.path.exists(configfile):
+			print "Configfile did not exist. Creating..."
+			open(configfile,'w').close()
+			# Add the new share to the config file
+			configtpl = '[profile]\ndownload = 0\nupload = 0\nshares = '
+			with open(configfile, "a") as f:
+				f.write(configtpl)
+			self.first_run(None, None)
+		if not os.path.exists(lsyncdconfig):
+			print "Configfile for lsyncd did not exist. Creating..."
+			open(configfile,'w').close()
+
+		# Some log file stuff
+		os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
+	#	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
+
 		# Get settings from config (sections)
 		parser = SafeConfigParser()
 		parser.read(configfile)
