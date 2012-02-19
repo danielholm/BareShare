@@ -32,7 +32,7 @@ import threading
 import csv
 from ConfigParser import SafeConfigParser
 
-version = "0.1.8"
+version = "0.2"
 
 # Settingsdir and -file.
 home = os.getenv('HOME')

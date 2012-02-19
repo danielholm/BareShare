@@ -27,9 +27,9 @@ Comming up:
 * Notifications (libnotify). Check!
 * Bandwith limit (rsync built-in --bwlimit=). Check!
 * Better rsync support (file scan for non uploaded files initally). Check!
-* Initial download of files at startup too.
+* Initial download of files at startup too. Check!
 * Working conf file. Check!
-* Preferences window with something in it.
+* Preferences window with something in it. Check!
 
 0.3
 * Share to * - possible to share some files easily using different services.
