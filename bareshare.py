@@ -172,13 +172,6 @@ class BareShareAppIndicator:
 		sep.show()
 		self.menu.append(sep)
 
-		# Add share guide
-		add = "Add Share"
-		add_share = gtk.ImageMenuItem(gtk.STOCK_ADD)
-		add_share.connect("activate", self.first_run, None)
-		add_share.show()
-		self.menu.append(add_share)
-
 		# Pause/Resume sync
 		# Check weather lsyncd is running or not
 		self.ppus = gtk.MenuItem()
@@ -186,6 +179,13 @@ class BareShareAppIndicator:
 		self.ppus.connect("activate", self.pauseUn)
 		self.ppus.show()
 		self.menu.append(self.ppus)
+
+		# Add share guide
+		add = "Add Share"
+		add_share = gtk.ImageMenuItem(gtk.STOCK_ADD)
+		add_share.connect("activate", self.first_run, None)
+		add_share.show()
+		self.menu.append(add_share)
 
 		# Open preferences dialog
 		pref = "Preferences"
@@ -346,23 +346,26 @@ class BareShareAppIndicator:
 		self.dialog.add(self.fix)
 		self.dialog.show_all()
 
-		# Get the text from entry fields
-		get_name = self.name.get_text()
-		get_adress = self.adress.get_text()
-		get_username = self.username.get_text()
-		get_local = self.local.get_text()
-		get_remote = self.remote.get_text()
-
 		# When clicked ok send the data
-		self.ok.connect("clicked", self.addShare, get_name, get_adress, get_username, get_local, get_remote)
+		self.ok.connect("clicked", self.addShare)
+		# Close the window
 		self.close.connect("clicked", self.closeDialog)
 
+	# Closes new share window
 	def closeDialog(self, widget):
 		self.dialog.destroy()
 
 	# Collect the data from the add share dialog and modify the config
-	def addShare(self, widget, name, adress, username, local, remote):
+	def addShare(self, event):
+		# Get the new values from preferences
+		name = self.name.get_text()
+		adress = self.adress.get_text()
+		username = self.username.get_text()
+		local = self.local.get_text()
+		remote = self.remote.get_text()
+
 		# Debugging
+		print "Added new share:"
 		print "Share name: "+ name
 		print "Domain: "+ adress
 		print "Username: "+ username
@@ -391,6 +394,9 @@ class BareShareAppIndicator:
 		out.writelines(lines)
 		out.close()
 
+		# Close the window
+		self.dialog.destroy()
+
 		# Add the new share to the config file
 		with open(configfile, "a") as f:
 			f.write(tpl)
@@ -405,15 +411,96 @@ class BareShareAppIndicator:
 
 	# Preferences window
 	def prefD(self, widget, data):
-		pref = gtk.MessageDialog(None, 
-		    gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
-		    gtk.BUTTONS_CLOSE, "Not yet implented")
+		# Get current settings from config
+		parser = SafeConfigParser()
+		parser.read(configfile)
+		Cdownload = parser.get('profile', 'download')
+		Cupload = parser.get('profile', 'upload')
 
-		pref.set_title("BareShare - Preferences")
-		pref.set_size_request(500, 300)
-		pref.set_position(gtk.WIN_POS_CENTER)
-		pref.run()
-		pref.destroy()
+		self.pref = gtk.Window()
+
+		self.pref.set_title("BareShare - Preferences")
+		self.pref.set_size_request(260, 160)
+		self.pref.set_position(gtk.WIN_POS_CENTER)
+
+		# Use fixed positions
+		self.fix = gtk.Fixed()	
+
+		# Set a label for the settings (Bandwidth)
+		self.speedL = gtk.Label("Bandwidth limit:")
+		self.fix.put(self.speedL, 10, 10)
+		
+		# Set upload speed
+		self.uploadL = gtk.Label("Upload:")
+		self.fix.put(self.uploadL, 10, 43)
+		self.upload = gtk.Entry()
+		self.upload.set_text(Cupload)
+		self.fix.put(self.upload, 90, 40)
+
+		# Set download speed
+		self.downloadL = gtk.Label("Download:")
+		self.fix.put(self.downloadL, 10, 73)
+		self.download = gtk.Entry()
+		self.download.set_text(Cdownload)
+		self.fix.put(self.download, 90, 70)
+
+		# Checkbox for support of LAN sync  * NOT IMPLEMENTED YET! *
+		self.check = gtk.CheckButton("LAN Sync")
+#		self.fix.put(self.check, 10, 10)
+		self.check.set_active(False)
+		self.check.unset_flags(gtk.CAN_FOCUS)
+#		self.check.connect("clicked", self.on_clicked)
+
+		# Ok battun to save
+		self.ok = gtk.Button(stock="gtk-ok")
+		self.fix.put(self.ok, 160, 120)
+
+		# Close button
+		self.close = gtk.Button(stock="gtk-close")
+		self.fix.put(self.close, 200, 120)
+
+		self.pref.add(self.fix)
+		self.pref.show_all()
+
+		# When clicked ok send the data or, if close, close it of course
+		self.ok.connect("clicked", self.savePref)
+		self.close.connect("clicked", self.closePref)
+
+	def closePref(self, widget):
+		self.pref.destroy()
+
+	def savePref(self, event):
+		# Get the new values from preferences
+		upload = self.upload.get_text()
+		download = self.download.get_text()
+		# Debugging
+		print "Saved settings:"
+		print "Upload: "+ upload
+		print "Download: "+ download
+
+		# Backup the old config file
+		os.system("cp "+configfile+" "+configfile+".bak")
+
+		tplU = "upload = "+upload+"\n"
+		tplD = "download = "+download+"\n"
+
+		# Change the upload row in config
+		lines = open(configfile, 'r').readlines()
+		lines[2] = tplU
+		out = open(configfile, 'w')
+		out.writelines(lines)
+		out.close()
+
+		# Change the download row in config
+		lines = open(configfile, 'r').readlines()
+		lines[1] = tplD
+		out = open(configfile, 'w')
+		out.writelines(lines)
+		out.close()
+		
+		# Close the preferences window
+		self.pref.destroy()
+
 
 def main():
 	gtk.main()
