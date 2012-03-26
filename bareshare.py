@@ -96,46 +96,6 @@ class BareShareAppIndicator:
 		shares = parser.get('profile', 'shares')
 		print "DEBUG: Shares: "+shares
 
-		# For each section of shares in conf, get data from its own section
-		def worker():
-			for share in shares.split(', '):
-				username = parser.get(share, 'username')
-				sharename = parser.get(share, 'name')
-				way = parser.get(share, 'way')
-				local = parser.get(share, 'local')
-				remote = parser.get(share, 'remote')
-				domain = parser.get(share, 'domain')
-				remotedir = username+"@"+domain+":"+remote
-				rsynclog = home + "/.bareshare/"+share+"rsync.log"
-				# Backup old logs if they exist
-				if os.path.exists(rsynclog):
-					os.system("cp "+rsynclog+" "+rsynclog+".1 && rm "+rsynclog) # Move and remove old log
-
-				print 'DEBUG: Starting "'+sharename+'" '+way # Debugging
-
-				# Run rsync of each share - but check for which direction
-				if way == "download":
-					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+download,"--stats","--progress","-azvv","-e","ssh",remotedir,local,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-					# The status message
-					self.statusM = downloadM
-
-				if way == "upload":
- 					self.rsyncRun = subprocess.Popen(["rsync","--bwlimit="+upload,"--stats","--progress","-azvv","-e","ssh",local,remotedir,"--log-file="+rsynclog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-					# The status message
-					self.statusM = uploadM
-
-				# Print whats happening
-				self.line = self.rsyncRun.stdout.readline()
-				rsyncM = self.line.rstrip()
-				print "DEBUG: "+rsyncM
-				print "DEBUG: Done, next!"
-				os.system('notify-send "Sync finished" "'+sharename+' is finished syncing" -i '+icon)
-
-		self.t = threading.Thread(target = worker)
-		self.t.daemon = True
-		self.t.start()
-#		self.t.join()
-
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
 		self.lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -225,15 +185,7 @@ class BareShareAppIndicator:
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
-		# Check if lsyncd is running
-		if pidL: #if it isnt
-			# Resume sync
-			self.ppus.set_label("Pause Sync")
-			self.label.set_label(startingM)
-			self.ind.set_icon(icon) # Set to active icon
-
-		else: # if it is
-			# Pause sync
+			os.system("killall -9 rsync")
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 			self.ind.set_icon(picon) # Passive icon
