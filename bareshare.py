@@ -99,15 +99,12 @@ class BareShareAppIndicator:
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
-		self.lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		os.system("lsyncd "+lsyncdconfig)
 		# Print the debugging
-#		self.lineL = self.lsyncdRun.stdout.readline()
-#		lsyncdM = self.lineL.rstrip()
 #		print "DEBUG: "+lsyncdM
 
 		# Keep the labels updated
 		gobject.timeout_add(1000, self.lsyncdOutput, None)
-#		gobject.timeout_add(100, self.rsyncOutput, None)
 
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
@@ -186,25 +183,14 @@ class BareShareAppIndicator:
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
-			os.system("killall -9 rsync")
+			os.system("killall -9 lsyncd")
 			self.ppus.set_label("Resume Sync")
 			self.label.set_label("Paused")
 			self.ind.set_icon(picon) # Passive icon
 
-	# Updates the label about rsync transer data
-	def rsyncOutput(self, widget):
-		self.labelR.set_label(rsyncM)
-		print "DEBUG: "+rsyncM
-
-		return True # make it go on
-
 	# Updates the label about lsyncd transer data
 	def lsyncdOutput(self, widget):
 		# Get output from lsyncd subprocess
-#		self.line = self.lsyncdRun.stdout.readline()
-#		lsyncdM = self.line.rstrip()
-#		self.labelR.set_label(lsyncdM)
-
 #		print "DEBUG: "+lsyncdM
 
 		return True # Keep it go on
