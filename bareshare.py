@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # BareShare
-# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120203
+# Authors: Daniel Holm, <admin@danielholm.se>, 120110 Updated 120226
 #
 # This program is free software: you can redistribute it and/or modify it 
 # under the terms of the GNU Lesser General Public License version 3, as published by the 
@@ -32,7 +32,8 @@ import threading
 import csv
 from ConfigParser import SafeConfigParser
 
-version = "0.2.1"
+# Set the version of the application
+version = "0.2.2"
 
 # Settingsdir and -file.
 home = os.getenv('HOME')
