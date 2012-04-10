@@ -91,7 +91,7 @@ class BareShareAppIndicator:
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
-		os.system("lsyncd "+lsyncdconfig)
+		self.lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		# Print the debugging
 #		print "DEBUG: "+lsyncdM
 
