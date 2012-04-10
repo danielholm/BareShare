@@ -62,9 +62,6 @@ downloadM = "Downloading..."
 
 # Creates the class for the application
 class BareShareAppIndicator:
-	# Get actions from menu and print 'em (debug)
-	def menuitem_response(w, buf):
-		print buf
 
 	def __init__(self):
 		# Check if config files and dirs exist. If not, create them.
@@ -83,19 +80,14 @@ class BareShareAppIndicator:
 			print "Configfile for lsyncd did not exist. Creating..."
 			open(configfile,'w').close()
 
-		# Some log file stuff
+		# Some log stuff
 		os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
 	#	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
 
-		# Get settings from config (sections)
-		parser = SafeConfigParser()
-		parser.read(configfile)
-		# Bandwith speed and use rsync --bwlimit=value
-		value = 0 # Default bandwidth value
-		download = parser.get('profile', 'download')
-		upload = parser.get('profile', 'upload')
-		shares = parser.get('profile', 'shares')
-		print "DEBUG: Shares: "+shares
+
+		# Get current settings
+#		bwUp = self.getPref(self, upload)
+#		bwDown = self.getPref(self, download)
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
@@ -104,7 +96,7 @@ class BareShareAppIndicator:
 #		print "DEBUG: "+lsyncdM
 
 		# Keep the labels updated
-		gobject.timeout_add(1000, self.lsyncdOutput, None)
+#		gobject.timeout_add(1000, self.lsyncdOutput, None)
 
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
@@ -179,7 +171,7 @@ class BareShareAppIndicator:
 	# Close the indicator and kill the sync daemon
 	def quit(self, widget, data=None):
 		gtk.main_quit()
-		os.system("killall -9 lsyncd rsync")
+		os.system("killall -9 lsyncd")
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
@@ -191,7 +183,6 @@ class BareShareAppIndicator:
 	# Updates the label about lsyncd transer data
 	def lsyncdOutput(self, widget):
 		# Get output from lsyncd subprocess
-#		print "DEBUG: "+lsyncdM
 
 		return True # Keep it go on
 			
@@ -443,6 +434,19 @@ class BareShareAppIndicator:
 		# Close the preferences window
 		self.pref.destroy()
 
+	def getPref(self, event, data):
+		# Get settings from config (sections)
+		parser = SafeConfigParser()
+		parser.read(configfile)
+		# Bandwith speed and use rsync --bwlimit=value
+		value = 0 # Default bandwidth value
+		download = parser.get('profile', 'download')
+		upload = parser.get('profile', 'upload')
+		shares = parser.get('profile', 'shares')
+
+		data = paser.get('profile', data)		
+
+		print "DEBUG: Shares: "+shares
 
 def main():
 	gtk.main()
