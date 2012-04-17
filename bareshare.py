@@ -91,12 +91,13 @@ class BareShareAppIndicator:
 
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
-		self.lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		os.system("lsyncd " + lsyncdconfig + " &")
+#		self.lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		# Print the debugging
-#		print "DEBUG: "+lsyncdM
+#		print "DEBUG: "+outData
 
 		# Keep the labels updated
-#		gobject.timeout_add(1000, self.lsyncdOutput, None)
+		gobject.timeout_add(1000, self.lsyncdOutput, None)
 
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
@@ -147,6 +148,16 @@ class BareShareAppIndicator:
 		settings.show()
 		self.menu.append(settings)
 
+        	# Disk usage info
+		# Get the disk space thats left on the server
+		self.diskspace = os.system("ssh "+ username + "@" + server + "'df -h $HOME | grep /dev | cut -c 35-37'")
+		# Create the menu item
+		self.disk = gtk.MenuItem()
+		self.disk.set_label(self.diskspace)
+		self.disk.set_sensitive(False)
+		self.disk.show()
+		self.menu.append(self.disk)
+
 		# Separator
 		sep = gtk.SeparatorMenuItem()
 		sep.show()
@@ -175,16 +186,59 @@ class BareShareAppIndicator:
 
 	# Pause or unpause function
 	def pauseUn(self, widget):
-			os.system("killall -9 lsyncd")
-			self.ppus.set_label("Resume Sync")
-			self.label.set_label("Paused")
-			self.ind.set_icon(picon) # Passive icon
+			self.data = self.getStatus()
+			print self.data # Debug
+			if self.data == "Pause":
+				print "Killing lsyncd"
+				os.system("killall -9 lsyncd")
+				self.ppus.set_label("Resume Sync")
+				self.label.set_label("Paused")
+				self.ind.set_icon(picon) # Passive icon
+			else:
+				print "Starting lsyncd again"
+				os.system("lsyncd " + lsyncdconfig + " &")
+				self.ppus.set_label("Pause sync")
+				self.label.set_label("Running")
+				self.ind.set_icon(icon) # Active icon
+
+	# Get the status of the lsyncd process
+	def getStatus(self, data):
+			if os.system("pgrep lsyncd"):
+				current = "Resume"
+				return current
+			else:
+				current = "Pause"
+				return current
 
 	# Updates the label about lsyncd transer data
 	def lsyncdOutput(self, widget):
-		# Get output from lsyncd subprocess
+			# Get the last row from log file
+			fileHandle = open ( lsyncdlog,"r" )
+			lineList = fileHandle.readlines()
+			fileHandle.close()
+			lastline = lineList[-1]
+			# print lastline
+			# return lastline
 
-		return True # Keep it go on
+			# Then be sure that the row contains the needed info
+			if "value" in lastline:
+				print "True"
+				# Then strip it down to just the data we need.
+				info = lastline[-2:]
+				print info
+				return info
+
+			# Standby message
+				if "building" in lastline:
+					return "Building file list..."
+
+			# If neither
+				else:
+					return "Syncing..."
+
+			# menuItem = data.get_label()
+
+			return True # Keep it go on
 			
 	# About
 	def show_about(self, widget, data):
