@@ -81,8 +81,7 @@ class BareShareAppIndicator:
 			open(configfile,'w').close()
 
 		# Some log stuff
-		os.system("cp "+lsyncdlog+" "+lsyncdlog+".1 && rm "+lsyncdlog) # Move old log file
-	#	os.system("cp "+baresharelog+" "+baresharelog+".1 && rm "+baresharelog) # Move old log file
+		os.system("cp "+lsyncdlog+" "+lsyncdlog+".1") # Move old log file
 
 
 		# Get current settings
@@ -92,12 +91,10 @@ class BareShareAppIndicator:
 		# Start the sync daemon in the background
 		print "DEBUG: Starting lsyncd."
 		os.system("lsyncd " + lsyncdconfig + " &")
-#		self.lsyncdRun = subprocess.Popen(["lsyncd",lsyncdconfig], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		# Print the debugging
-#		print "DEBUG: "+outData
 
 		# Keep the labels updated
 		gobject.timeout_add(1000, self.lsyncdOutput, None)
+		gobject.timeout_add(1000, self.diskOutput, None)
 
 		# Create the appindicator
 		self.ind = appindicator.Indicator ("BareShare", icon, appindicator.CATEGORY_APPLICATION_STATUS)
@@ -149,11 +146,8 @@ class BareShareAppIndicator:
 		self.menu.append(settings)
 
         	# Disk usage info
-		# Get the disk space thats left on the server
-		self.diskspace = os.system("ssh "+ username + "@" + server + "'df -h $HOME | grep /dev | cut -c 35-37'")
-		# Create the menu item
 		self.disk = gtk.MenuItem()
-		self.disk.set_label(self.diskspace)
+		self.disk.set_label("Getting available disk space")
 		self.disk.set_sensitive(False)
 		self.disk.show()
 		self.menu.append(self.disk)
@@ -202,7 +196,7 @@ class BareShareAppIndicator:
 				self.ind.set_icon(icon) # Active icon
 
 	# Get the status of the lsyncd process
-	def getStatus(self, data):
+	def getStatus(self):
 			if os.system("pgrep lsyncd"):
 				current = "Resume"
 				return current
@@ -217,29 +211,48 @@ class BareShareAppIndicator:
 			lineList = fileHandle.readlines()
 			fileHandle.close()
 			lastline = lineList[-1]
-			# print lastline
-			# return lastline
 
-			# Then be sure that the row contains the needed info
-			if "value" in lastline:
-				print "True"
-				# Then strip it down to just the data we need.
-				info = lastline[-2:]
-				print info
-				return info
+			# get the status of lsyncd
+			self.data = self.getStatus()
+			# if it is running
+			if self.data == "Pause":
+				# Then be sure that the row contains the needed info
+				if "value" in lastline:
+					print "True"
+					# Then strip it down to just the data we need.
+					info = lastline[-2:]
+					print info
+					self.label.set_label(info)
 
-			# Standby message
+				# Standby message
 				if "building" in lastline:
-					return "Building file list..."
+					self.label.set_label(buildM)
+					self.ind.set_icon(icon)
 
-			# If neither
-				else:
-					return "Syncing..."
+				if "recursive startup rsync" in lastline:
+					self.label.set_label(buildM)
+					self.ind.set_icon(icon)
 
-			# menuItem = data.get_label()
+				if "Finished" in lastline:
+					self.label.set_label(finishedM)
+					self.ind.set_icon(icon)
+
+				if "/" in lastline:
+					if not "recursive startup rsync":
+						self.label.set_label(syncingM)
+						self.ind.set_icon(sicon)
+			# if its not
+			else:
+				self.label.set_label("Paused")
 
 			return True # Keep it go on
 			
+	def diskOutput(self, widget):
+		# Get the disk space thats left on the server
+#		self.diskspace = os.system("ssh "+ username + "@" + server + "'df -h $HOME | grep /dev | cut -c 35-37'")
+		self.diskspace = str(0)
+		self.disk.set_label(self.diskspace+" GB free space")
+
 	# About
 	def show_about(self, widget, data):
 		# Create AboutDialog object
