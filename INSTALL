@@ -1,0 +1,6 @@
+# Install the desktop launcher
+sudo mv bareshare.desktop /usr/share/applications
+cd /usr/share/applications
+sudo chmod 644 bareshare.desktop
+sudo chown root:root bareshare.desktop
+# Add it to unity
