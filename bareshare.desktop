@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=0.2.5
+Type=Application
+Terminal=false
+Icon[en_GB]=/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark.png
+Name[en_GB]=BareShare
+Exec=python /home/daniel/Program/Projekt/BareShare/bareshare.py
+Name=BareShare
+Icon=/home/daniel/Program/Projekt/BareShare/icons/bareshare-dark.png
