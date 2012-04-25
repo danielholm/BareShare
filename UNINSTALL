@@ -1,0 +1,7 @@
+#!bin/bash
+
+# Remove launcher
+sudo rm /usr/share/BareShare
+
+# Remove the desktop launcher
+sudo rm /usr/share/applications/bareshare.desktop

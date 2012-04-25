@@ -35,3 +35,5 @@ Comming up:
 * Share to * - possible to share some files easily using different services.
 * Nautilus plugin.
 * New lsyncd settings which will make multiple clients safer.
+* Show the current disk usage in menu.
+* SHow transfer speed and file info in menu.

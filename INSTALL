@@ -1,3 +1,11 @@
+#!bin/bash
+
+# Move code
+sudo mkdir /usr/share/BareShare
+sudo cp bareshare.py /usr/share/BareShare
+sudo cp -R icons/ /usr/share/BareShare
+sudo cp -R template/ /usr/share/BareShare
+
 # Install the desktop launcher
 sudo mv bareshare.desktop /usr/share/applications
 cd /usr/share/applications
